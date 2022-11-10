@@ -1,16 +1,12 @@
 import datetime
+from dataclasses import dataclass
 
-
-class User():
-    def __init__(self):
-        self.name = ''
-        self.gender = ''
-        self.birthdate = datetime.date
-        self.city = ''
-        self.reason = ''
-        self.profile_photo = ''
-        self.other_photos = []
-
-
-    def set_name(self, name):
-        self.name = name
+@dataclass
+class User:
+    fname: str = ''
+    gender: chr = ''
+    birthdate: datetime.date = datetime.date.today()
+    city: str = ''
+    reason: str = ''
+    profile_photo: str = ''
+    other_photos: tuple = ()
