@@ -2,7 +2,6 @@
 import config
 import logging
 
-from User import User
 from texts import ABOUT, WELCOME, UNIQUENESS, \
                   IMPRINT, CONCEPT, PHOTO, \
                   FIND, INVESTORS, JOURNALISTS, \
@@ -11,9 +10,8 @@ from aiogram import Bot, Dispatcher, executor, types
 from config import TOKEN
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=config.TOKEN)
+bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
-user_form = User()
 
 # сообщение и стартовые кнопки перейти сразу к регистрации или прочитать что это за проект
 @dp.message_handler(commands='start')
