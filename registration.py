@@ -2,30 +2,33 @@
 import os
 import config
 import logging
-import datetime
 import requests
 import json
 
+from datetime import datetime
 from User import User
 from texts import LETS_GO, REGISTRATION_RULES, NAME, \
                     UNDER_CONSTRUCTION, BIRTHDATE, WRONG_BIRTHDATE, \
-                        CITY_CHOOSE
+                        CITY_CHOOSE, MODERATION, DOWNLOAD_PHOTO
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Text
 from aiogram import Bot, Dispatcher, executor, types
 from config import TOKEN
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=config.TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 user_form = User()
-
+scheduler = AsyncIOScheduler()
+scheduler.start()
 # форма нашего пользователя
 class Form(StatesGroup):
     value = State()
     birthdate = State()
+    profile_photo = State()
 
 
 @dp.message_handler(commands='start')
@@ -39,18 +42,16 @@ async def registration_begin(message: types.Message):
 
 
 @dp.callback_query_handler(text='begin_registration')
-async def show_rules(message: types.Message):
+async def show_rules(query: types.CallbackQuery):
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     lets_go_button = types.InlineKeyboardButton('✅ Перейти к заполнению', callback_data='lets_go')
     keyboard.add(lets_go_button)
-    await bot.send_sticker(message.from_user.id, sticker='CAACAgIAAxkBAAEGXNhja81V5YcPFOinVKsLruJ0HSlQkwAC3QEAAiryOgcgVPt97qLpiysE')
-    await bot.send_message(message.from_user.id, text=REGISTRATION_RULES, reply_markup=keyboard)
+    await query.message.edit_text(text=REGISTRATION_RULES, reply_markup=keyboard)
 
 # Ввод имени
 @dp.callback_query_handler(text='lets_go')
-async def show_registration_start(message: types.Message, state: FSMContext):
-    await bot.send_sticker(message.from_user.id, sticker='CAACAgIAAxkBAAEGXOdja89qCtHYjC5vOF52RZVbdEzmagAC0QEAAiryOgcl5HkO8XacHSsE')
-    await bot.send_message(message.from_user.id, text=NAME)
+async def show_registration_start(query: types.CallbackQuery, state: FSMContext):
+    await query.message.edit_text(text=NAME)
     await Form.value.set()
 
 # Ожидаем пока пользователь введет имя и сохраняем его
@@ -73,10 +74,14 @@ async def process_name(message: types.Message, state: FSMContext):
     await bot.send_message(message.chat.id, text="🟢 Укажите ваш пол и кого вы ищете:", reply_markup=keyboard)
 
 
+async def edit_msg(message: types.Message):
+    await message.edit_text("Так")
+
+
 @dp.callback_query_handler(text='male')
-async def show_male_menu(message: types.Message):
+async def show_male_menu(query: types.CallbackQuery):
     user_form.gender = 'М'
-    await bot.send_message(message.from_user.id, BIRTHDATE)
+    await query.message.edit_text(BIRTHDATE)
     await Form.birthdate.set()
 @dp.message_handler(state=Form.birthdate)
 async def check_date(message: types.Message, state:FSMContext):
@@ -103,9 +108,9 @@ async def check_date(message: types.Message, state:FSMContext):
 
 
 @dp.callback_query_handler(text='female')
-async def show_female_menu(message: types.Message):
+async def show_female_menu(query: types.CallbackQuery):
     user_form.gender = 'Ж'
-    await bot.send_message(message.from_user.id, BIRTHDATE)
+    await query.message.edit_text(BIRTHDATE)
     await Form.birthdate.set()
 @dp.message_handler(state=Form.birthdate)
 async def check_date(message: types.Message, state:FSMContext):
@@ -134,11 +139,112 @@ async def check_date(message: types.Message, state:FSMContext):
 async def show_other(message: types.Message):
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     subscribe_button = types.InlineKeyboardButton('✅ Подписаться на наш канал', url='https://t.me/UnisonDating')
-    again_button = types.InlineKeyboardButton('🔁 Начать с начала', callback_data='begin_registration')
+    again_button = types.InlineKeyboardButton('🔁 Начать регистрацию с начала', callback_data='begin_registration')
     keyboard.add(subscribe_button)
     keyboard.add(again_button)
-    await bot.send_sticker(message.from_user.id, sticker='CAACAgIAAxkBAAEGXTNja97c2AhFSZpCHbKyXERv4gABszQAAtIBAAIq8joHSCUcydXnMvUrBA')
     await bot.send_message(message.from_user.id, text=UNDER_CONSTRUCTION, reply_markup=keyboard)
+
+
+@dp.callback_query_handler(text='moscow')
+async def add_moscow(query: types.CallbackQuery):
+    user_form.city = 'Москва'
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    seriously_button = types.InlineKeyboardButton('💙 Серьёзные отношения', callback_data='srsly')
+    family_button = types.InlineKeyboardButton('💜 Создание семьи', callback_data='family')
+    friends_button = types.InlineKeyboardButton('Дружба и общение', callback_data='friends')
+    withou_obligations_button = types.InlineKeyboardButton('Встречи без обязательств', callback_data='without')
+    no_answer_button = types.InlineKeyboardButton('Затрудняюсь ответить', callback_data='noanswer')
+    keyboard.add(seriously_button)
+    keyboard.add(family_button)
+    keyboard.add(friends_button)
+    keyboard.add(withou_obligations_button)
+    keyboard.add(no_answer_button)
+    await query.message.edit_text('🎯 Выберите с какой целью вы ищете новые знакомства', reply_markup=keyboard)
+
+@dp.callback_query_handler(text='saint-p')
+async def add_saintp(query: types.CallbackQuery):
+    user_form.city = 'Санкт-Петербург'
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    seriously_button = types.InlineKeyboardButton('💙 Серьёзные отношения', callback_data='srsly')
+    family_button = types.InlineKeyboardButton('💜 Создание семьи', callback_data='family')
+    friends_button = types.InlineKeyboardButton('Дружба и общение', callback_data='friends')
+    withou_obligations_button = types.InlineKeyboardButton('Встречи без обязательств', callback_data='without')
+    no_answer_button = types.InlineKeyboardButton('Затрудняюсь ответить', callback_data='noanswer')
+    keyboard.add(seriously_button)
+    keyboard.add(family_button)
+    keyboard.add(friends_button)
+    keyboard.add(withou_obligations_button)
+    keyboard.add(no_answer_button)
+    await query.message.edit_text('🎯 Выберите с какой целью вы ищете новые знакомства', reply_markup=keyboard)
+
+@dp.callback_query_handler(text='samara')
+async def add_samara(query: types.CallbackQuery):
+    user_form.city = 'Самара'
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    seriously_button = types.InlineKeyboardButton('💙 Серьёзные отношения', callback_data='srsly')
+    family_button = types.InlineKeyboardButton('💜 Создание семьи', callback_data='family')
+    friends_button = types.InlineKeyboardButton('Дружба и общение', callback_data='friends')
+    withou_obligations_button = types.InlineKeyboardButton('Встречи без обязательств', callback_data='without')
+    no_answer_button = types.InlineKeyboardButton('Затрудняюсь ответить', callback_data='noanswer')
+    keyboard.add(seriously_button)
+    keyboard.add(family_button)
+    keyboard.add(friends_button)
+    keyboard.add(withou_obligations_button)
+    keyboard.add(no_answer_button)
+    await query.message.edit_text('🎯 Выберите с какой целью вы ищете новые знакомства', reply_markup=keyboard)
+
+
+@dp.callback_query_handler(text='nomad')
+async def add_nomad(query: types.CallbackQuery):
+    user_form.city = 'Кочевник'
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    seriously_button = types.InlineKeyboardButton('💙 Серьёзные отношения', callback_data='srsly')
+    family_button = types.InlineKeyboardButton('💜 Создание семьи', callback_data='family')
+    friends_button = types.InlineKeyboardButton('Дружба и общение', callback_data='other')
+    withou_obligations_button = types.InlineKeyboardButton('Встречи без обязательств', callback_data='other')
+    no_answer_button = types.InlineKeyboardButton('Затрудняюсь ответить', callback_data='other')
+    keyboard.add(seriously_button)
+    keyboard.add(family_button)
+    keyboard.add(friends_button)
+    keyboard.add(withou_obligations_button)
+    keyboard.add(no_answer_button)
+    await query.message.edit_text('🎯 Выберите с какой целью вы ищете новые знакомства', reply_markup=keyboard)
+
+
+@dp.callback_query_handler(text='srsly')
+async def add_reason_srsly(query: types.CallbackQuery):
+    user_form.reason = 'Серьезные отношения'
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    recomendations_button = types.InlineKeyboardButton('Рекомендации по загрузке', callback_data='recomendation')
+    download_photo_button = types.InlineKeyboardButton('Загрузить фото', callback_data='download_main')
+    keyboard.add(recomendations_button)
+    keyboard.add(download_photo_button)
+    await query.message.edit_text(MODERATION, reply_markup=keyboard)
+
+
+@dp.callback_query_handler(text='family')
+async def add_reason_family(query: types.CallbackQuery):
+    user_form.reason = 'Создание семьи'
+    user_form.reason = 'Серьезные отношения'
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    recomendations_button = types.InlineKeyboardButton('Рекомендации по загрузке', callback_data='recomendation')
+    download_photo_button = types.InlineKeyboardButton('Загрузить фото', callback_data='download_main')
+    keyboard.add(recomendations_button)
+    keyboard.add(download_photo_button)
+    await query.message.edit_text(MODERATION, reply_markup=keyboard)
+
+# перед обработкой этого события надо отправить user_form в чат модерации на модерацию
+@dp.callback_query_handler(text='download_main')
+async def ad_photo(query: types.CallbackQuery):
+    await query.message.edit_text(DOWNLOAD_PHOTO)
+    await Form.profile_photo.set()
+@dp.message_handler(state=Form.profile_photo, content_types=types.ContentTypes.PHOTO)
+async def download_photo(message: types.Message, state: FSMContext):
+    file_id = message.photo[-1].file_id
+    await state.finish()
+    await bot.send_photo(message.from_user.id, file_id, caption='Это ваше фото:')
+
+
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
