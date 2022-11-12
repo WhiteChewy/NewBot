@@ -9,4 +9,6 @@ class User:
     city: str = ''
     reason: str = ''
     profile_photo: str = ''
-    other_photos: tuple = ()
+    first_photo: str = ''
+    second_photo: str = ''
+    third_photo: str = ''
