@@ -2,10 +2,7 @@
 import config
 import logging
 
-from texts import ABOUT, WELCOME, UNIQUENESS, \
-                  IMPRINT, CONCEPT, PHOTO, \
-                  FIND, INVESTORS, JOURNALISTS, \
-                  USER_AGREEMENT1, USER_AGREEMENT2, USER_AGREEMENT3
+from ru_message_texts import *
 from aiogram import Bot, Dispatcher, executor, types
 from config import TOKEN
 
