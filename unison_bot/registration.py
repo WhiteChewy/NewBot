@@ -34,12 +34,7 @@ class Form(StatesGroup):
     second_side_photo = State()
     third_side_photo = State()
     # TAGS states.
-    moderated_photo = State()       # when active user status changes. data name = name of state
-    moderated_info = State()        # when active user status changes. data name = name of state
-    moderated = State()             # when active user status changes. data name = name of state
-    reuploading_photo = State()     # when active user status changes. data name = name of state
-    alogrithm_studing = State()     # when active user status changes. data name = name of state
-    extra_photo_uploaded = State()  # when active user status changes. data name = name of state
+    tags = State()       # when active user status changes. data name = name of state
 
 
 # BOT MESSAGES MECHANICS
@@ -213,19 +208,18 @@ async def registration_begin(message: types.Message, state: FSMContext):
     await bot.send_photo(message.from_user.id, photo)
     await bot.send_message(message.from_user.id, text= texts.LETS_GO, reply_markup=keyboard)
     # TAGS INITIATION
-    await Form.moderated_photo.set()
-    await state.update_data(moderated_photo='False')
+    await Form.tags.set()
+    await state.update_data(moderated_photo=False)
+    await state.update_data(moderated_info=False)
+    await state.update_data(moderated=False)
+    await state.update_data(reuploading_photo=False)
+    await state.update_data(alogrithm_studing=False)
+    await state.update_data(extra_photos_uploaded=False)
     await state.reset_state(with_data=False)
-    await state.update_data(moderated_info='False')
-    await state.reset_state(with_data=False)
-    await state.update_data(moderated='False')
-    await state.reset_state(with_data=False)
-    await state.update_data(reuploading_photo='False')
-    await state.reset_state(with_data=False)
-    await state.update_data(alogrithm_studing='False')
-    await state.reset_state(with_data=False)
-    await state.update_data(extra_photos_uploaded='False')
-    await state.reset_state(with_data=False)
+    await state.update_data(likes=7)
+    await state.update_data(super_likes=5)
+    await state.update_data(algorithm_steps=31)
+    await state.update_data(chat_id = message.from_user.id)
 
 
 # REGISTRATION RULES
@@ -456,17 +450,17 @@ async def download_photo(message: types.Message, state: FSMContext):
     confirm_button = types.InlineKeyboardButton(buttons_texts.YES, callback_data='confirm_photo')
     again_button = types.InlineKeyboardButton(buttons_texts.NO, callback_data='upload_main_photo')
     keyboard.row(confirm_button, again_button)
-    await bot.send_photo(message.from_user.id, file_id)
+    #await bot.send_photo(message.from_user.id, file_id)
     await bot.send_message(message.from_user.id, text=texts.CONFIRMING_PHOTO, reply_markup=keyboard)
 
 # User MAKE the BASIC ACCOUNT. He can choose to check if nothing wrong or move to uploading extra photos
 @dp.callback_query_handler(text='confirm_photo')
-async def end_basic_registration(message: types.CallbackQuery):
+async def end_basic_registration(query: types.CallbackQuery):
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     watch_profile_button = types.InlineKeyboardButton(buttons_texts.WATCH_PROFILE, callback_data='show_base_profile')
     next_button = types.InlineKeyboardButton(buttons_texts.NEXT_STEP, callback_data='upload_extra_photo')
     keyboard.row(watch_profile_button, next_button)
-    await bot.send_message(message.from_user.id, texts.BASE_PROFILE, reply_markup=keyboard)
+    await query.message.edit_text(texts.BASE_PROFILE, reply_markup=keyboard)
 
 # SHOWING recomendations to uploading PHOTOS
 @dp.callback_query_handler(text='recomendations')
@@ -502,7 +496,7 @@ async def upload_three_photo(message: types.Message):
 async def upload_first_photo(message: types.Message, state: FSMContext):
     await message.photo[-1].download(destination_file='./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
     user_form.first_photo = './pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id)
-    await state.finish() 
+    await state.reset_state(with_data=False)
     await bot.send_message(message.from_user.id, text=texts.SECOND_PHOTO)
     await Form.second_side_photo.set() # also we can use "state.next()"
 # IF ANSWER OF USER IS PHOTO and STATE second_side_photo is ACTIVE = UPLOAD 2nd PHOTO TO SERVER and FINISH THE STATE IN STATE MACHINE
@@ -510,7 +504,7 @@ async def upload_first_photo(message: types.Message, state: FSMContext):
 async def upload_second_photo(message: types.Message, state: FSMContext):
     await message.photo[-1].download(destination_file='./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
     user_form.second_photo = './pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id)
-    await state.finish()
+    await state.reset_state(with_data=False)
     await bot.send_message(message.from_user.id, text=texts.THIRD_PHOTO)
     await Form.third_side_photo.set() # also we can use "state.next()"
 # IF ANSWER OF USER IS PHOTO and STATE third_side_photo is ACTIVE = UPLOAD 3rd PHOTO TO SERVER and FINISH THE STATE IN STATE MACHINE
@@ -518,10 +512,10 @@ async def upload_second_photo(message: types.Message, state: FSMContext):
 async def upload_third_photo(message: types.Message, state: FSMContext):
     await message.photo[-1].download(destination_file='./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
     user_form.third_photo = './pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id)
-    await state.finish()
+    await state.reset_state(with_data=False)
     inline_keyboard = types.InlineKeyboardMarkup(resize_true = True)
     chek_button = types.InlineKeyboardButton(buttons_texts.CHECK_EXTRA_PHOTOS, callback_data='show_extra_photos')
-    next_step_button = types.InlineKeyboardButton(buttons_texts.NEXT_STEP, callback_data='wait_moderation')
+    next_step_button = types.InlineKeyboardButton(buttons_texts.NEXT_STEP, callback_data='start_alogrithm_educating')
     inline_keyboard.row(chek_button, next_step_button)
     await bot.send_message(message.from_user.id, text=texts.ALL_PHOTOS, reply_markup=inline_keyboard)
 # CONFIRMING EXTRA PHOTOS BEFORE UPLOADING
@@ -554,13 +548,209 @@ async def add_other_photos(query: types.CallbackQuery):
 async def show_rules_of_studing(query: types.CallbackQuery):
     inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     begin_button = types.InlineKeyboardButton(text=buttons_texts.BEGIN_BUTTON, callback_data='first_educational_photo')
-    inline_keyboard(begin_button)
+    inline_keyboard.add(begin_button)
     await query.message.edit_text(text=texts.RULE_STUDING, reply_markup=inline_keyboard)
 
 
 @dp.callback_query_handler(text='first_educational_photo')
-async def alogrithm_education():
-    pass
+@dp.callback_query_handler(text='unlike_educate_algorithm')
+async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    if data['algorithm_steps'] > 0 and data['likes'] > 0 and data['super_likes'] > 0:
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+    elif data['algorithm_steps'] > 0 and data['likes'] == 0 and data['super_likes'] > 0:
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+    elif data['algorithm_steps'] > 0 and data['likes'] > 0 and data['super_likes'] == 0:
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+    elif data['algorithm_steps'] > 0 and data['likes'] == 0 and data['super_likes'] == 0:
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+    else:
+        pass
+    await state.reset_state(with_data=False)
+
+
+@dp.callback_query_handler(text='like_educate_algorithm')
+async def second_algorithm_education(query: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    if data['algorithm_steps']-1 > 0 and data['likes']-1 > 0 and data['super_likes'] > 0:
+        await state.update_data(likes=data['likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes']-1, data['super_likes']), show_alert=True)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+    elif data['algorithm_steps']-1 > 0 and data['likes']-1 == 0 and data['super_likes'] > 0:
+        await state.update_data(likes=data['likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes']-1, data['super_likes']), show_alert=True)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+        pass
+    elif data['algorithm_steps']-1 > 0 and data['likes']-1 > 0 and data['super_likes'] == 0:
+        await state.update_data(likes=data['likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes']-1, data['super_likes']), show_alert=True)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+        pass
+    elif data['algorithm_steps']-1 > 0 and data['likes']-1 == 0 and data['super_likes'] == 0:
+        await state.update_data(likes=data['likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes']-1, data['super_likes']), show_alert=True)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+        pass
+    else:
+        pass
+
+
+@dp.callback_query_handler(text='superlike_educate_algorithm')
+async def third_algorithm_education(query: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    if data['algorithm_steps']-1 > 0 and data['likes'] > 0 and data['super_likes']-1 > 0:
+        await state.update_data(super_likes=data['super_likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']-1), show_alert=True)
+        await state.update_data(super_likes=data['super_likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+    elif data['algorithm_steps']-1 > 0 and data['likes'] == 0 and data['super_likes']-1 > 0:
+        await state.update_data(super_likes=data['super_likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']-1), show_alert=True)
+        await state.update_data(super_likes=data['super_likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+    elif data['algorithm_steps']-1 > 0 and data['likes'] > 0 and data['super_likes']-1 == 0:
+        await state.update_data(super_likes=data['super_likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']-1), show_alert=True)
+        await state.update_data(super_likes=data['super_likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+    elif data['algorithm_steps']-1 > 0 and data['likes'] == 0 and data['super_likes']-1 == 0:
+        await state.update_data(super_likes=data['super_likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']-1), show_alert=True)
+        await state.update_data(super_likes=data['super_likes']-1)
+        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+        await state.reset_state(with_data=False)
+        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
+        await query.message.delete()
+        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
+    
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)    
