@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
+import aioschedule
 import logging
 import requests
 import ru_message_texts as texts
 import ru_buttons_texts as buttons_texts
 import json
+import asyncio
+import base64
 
 from aiogram.dispatcher.filters import Filter
 from User import User
@@ -211,6 +214,7 @@ async def registration_begin(message: types.Message, state: FSMContext):
     await Form.tags.set()
     await state.update_data(moderated_photo=False)
     await state.update_data(moderated_info=False)
+    await state.update_data(pass_moderation=False)
     await state.update_data(moderated=False)
     await state.update_data(reuploading_photo=False)
     await state.update_data(alogrithm_studing=False)
@@ -218,9 +222,8 @@ async def registration_begin(message: types.Message, state: FSMContext):
     await state.reset_state(with_data=False)
     await state.update_data(likes=7)
     await state.update_data(super_likes=5)
-    await state.update_data(algorithm_steps=31)
-    await state.update_data(chat_id = message.from_user.id)
-
+    await state.update_data(algorithm_steps=30)
+    await state.update_data(user_id = message.from_user.id)
 
 # REGISTRATION RULES
 @dp.callback_query_handler(text='begin_registration')
@@ -242,12 +245,28 @@ async def set_profile_name(message: types.Message, state: FSMContext):
         await message.reply(texts.NAME)
         return 
     await state.update_data(name=message.text) # set the profile name 
+    #------------------------------------------------------------------------------
+    # ---------------------POST request for some STATISTICS------------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": message.from_user.id,
+      "event_type": "bot_reg_name_sent",
+      "user_properties": {
+        "RegName": message.text
+      }
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False) # close the NAME state in STATE MACHINE
     # GENDER CHOOSE MESSAGE AND InlineKeyboard
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     male_button = types.InlineKeyboardButton(buttons_texts.GENDER_MALE[0], callback_data='male')
     female_button = types.InlineKeyboardButton(buttons_texts.GENDER_FEMALE[0], callback_data='female')
-    under_construction_button = types.InlineKeyboardButton(buttons_texts.OTHER_GENDER, callback_data='under_construction')
+    under_construction_button = types.InlineKeyboardButton(buttons_texts.OTHER_GENDER, callback_data='other_gender')
     keyboard.add(male_button, female_button, under_construction_button)
     await bot.send_message(message.chat.id, text=texts.GENDER_CHOOSE, reply_markup=keyboard)
 
@@ -255,7 +274,24 @@ async def set_profile_name(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(text='male')
 async def show_male_menu(query: types.CallbackQuery, state: FSMContext):
     await Form.gender.set()
+    data = await state.get_data()
     await state.update_data(gender=buttons_texts.GENDER_MALE[1])
+    #-------------------------------------------------------------------------------
+    #--------------------------POST request for STATISTIC---------------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_gender_man_btn",
+      "user_properties": {
+        "Gender": "Мужчина"
+      }
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     await query.message.edit_text(texts.BIRTHDATE)
     await Form.birthdate.set()
@@ -271,12 +307,29 @@ async def check_date(message: types.Message, state:FSMContext):
         await message.reply(texts.WRONG_BIRTHDATE)
         return
     await state.update_data(birthday=message.text)
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------POST request for some STATISTICS---------------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_birthday_sent",
+      "user_properties": {
+        "Birthday": data['birthday']
+      }
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False) # finish the BIRTHDAY STATE in STATE MACHINE
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     moscow_button = types.InlineKeyboardButton(buttons_texts.MOSCOW, callback_data='moscow')
     saint_p_button = types.InlineKeyboardButton(buttons_texts.SAINT_PETERSBURG, callback_data='saint-p')
     samara_button = types.InlineKeyboardButton(buttons_texts.SAMARA, callback_data='samara')
-    under_construction_button = types.InlineKeyboardButton(buttons_texts.OTHER_CITY, callback_data='under_construction')
+    under_construction_button = types.InlineKeyboardButton(buttons_texts.OTHER_CITY, callback_data='other_city')
     nomad_button = types.InlineKeyboardButton(buttons_texts.NOMAD, callback_data='nomad')
     keyboard.add(moscow_button)
     keyboard.add(saint_p_button)
@@ -289,7 +342,24 @@ async def check_date(message: types.Message, state:FSMContext):
 @dp.callback_query_handler(text='female')
 async def show_female_menu(query: types.CallbackQuery, state: FSMContext):
     await Form.gender.set()
+    data = await state.get_data()
     await state.update_data(gender=buttons_texts.GENDER_FEMALE[1])
+    #------------------------------------------------------------------------------
+    #--------------------------POST request for STATISTIC--------------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_gender_woman_btn",
+      "user_properties": {
+        "Gender": "Женщина"
+      }
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     await query.message.edit_text(texts.BIRTHDATE)
     await Form.birthdate.set()
@@ -305,12 +375,29 @@ async def check_date(message: types.Message, state:FSMContext):
         await message.reply(texts.WRONG_BIRTHDATE)
         return
     await state.update_data(birthday=message.text)
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------POST request for some STATISTICS---------------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_birthday_sent",
+      "user_properties": {
+        "Birthday": data['birthday']
+      }
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False) # finish the BIRTHDAY STATE in STATE MACHINE
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     moscow_button = types.InlineKeyboardButton(buttons_texts.MOSCOW, callback_data='moscow')
     saint_p_button = types.InlineKeyboardButton(buttons_texts.SAINT_PETERSBURG, callback_data='saint-p')
     samara_button = types.InlineKeyboardButton(buttons_texts.SAMARA, callback_data='samara')
-    under_construction_button = types.InlineKeyboardButton(buttons_texts.OTHER_CITY, callback_data='under_construction')
+    under_construction_button = types.InlineKeyboardButton(buttons_texts.OTHER_CITY, callback_data='other_city')
     nomad_button = types.InlineKeyboardButton(buttons_texts.NOMAD, callback_data='nomad')
     keyboard.add(moscow_button)
     keyboard.add(saint_p_button)
@@ -319,31 +406,173 @@ async def check_date(message: types.Message, state:FSMContext):
     keyboard.add(nomad_button)
     bot.send_message(message.from_user.id, text=texts.CITY_CHOOSE, reply_markup=keyboard)
 
+@dp.callback_query_handler(text='subscribe')
+async def subscribe_post_func(query: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": "userId",
+      "event_type": "bot_our_telegram_subscribe_btn"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
 
 @dp.callback_query_handler(text='under_construction')
-async def show_under_construction(message: types.Message):
-    """
-    THERE ARE TWO GENDERS
-    """
+async def show_under_construction(message: types.Message, state: FSMContext):
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    subscribe_button = types.InlineKeyboardButton(buttons_texts.SUBSCRIBE, url='https://t.me/UnisonDating')
+    subscribe_button = types.InlineKeyboardButton(buttons_texts.SUBSCRIBE, url='https://t.me/UnisonDating', callback_data='subscribe')
     again_button = types.InlineKeyboardButton(buttons_texts.RESTART_REGISTRATION, callback_data='begin_registration')
     keyboard.row(subscribe_button, again_button)
     await bot.send_message(message.from_user.id, text=texts.UNDER_CONSTRUCTION, reply_markup=keyboard)
 
+@dp.callback_query_handler(text='other_city')
+async def show_under_construction(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_city_other_btn"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    subscribe_button = types.InlineKeyboardButton(buttons_texts.SUBSCRIBE, url='https://t.me/UnisonDating', callback_data='subscribe')
+    again_button = types.InlineKeyboardButton(buttons_texts.RESTART_REGISTRATION, callback_data='begin_registration')
+    keyboard.row(subscribe_button, again_button)
+    await bot.send_message(message.from_user.id, text=texts.UNDER_CONSTRUCTION, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='other_gender')
+async def show_under_construction(message: types.Message, state: FSMContext):
+    """
+    THERE ARE TWO GENDERS
+    """
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #------------------------POST request for some STATISTIC-----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_gender_other_btn"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    subscribe_button = types.InlineKeyboardButton(buttons_texts.SUBSCRIBE, url='https://t.me/UnisonDating', callback_data='subscribe')
+    again_button = types.InlineKeyboardButton(buttons_texts.RESTART_REGISTRATION, callback_data='begin_registration')
+    keyboard.row(subscribe_button, again_button)
+    await bot.send_message(message.from_user.id, text=texts.UNDER_CONSTRUCTION, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='friends')
+async def show_under_construction(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_purpose_friendship_btn"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    subscribe_button = types.InlineKeyboardButton(buttons_texts.SUBSCRIBE, url='https://t.me/UnisonDating', callback_data='subscribe')
+    again_button = types.InlineKeyboardButton(buttons_texts.RESTART_REGISTRATION, callback_data='begin_registration')
+    keyboard.row(subscribe_button, again_button)
+    await bot.send_message(message.from_user.id, text=texts.UNDER_CONSTRUCTION, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='no_duty')
+async def show_under_construction(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_purpose_hookup_btn"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    subscribe_button = types.InlineKeyboardButton(buttons_texts.SUBSCRIBE, url='https://t.me/UnisonDating', callback_data='subscribe')
+    again_button = types.InlineKeyboardButton(buttons_texts.RESTART_REGISTRATION, callback_data='begin_registration')
+    keyboard.row(subscribe_button, again_button)
+    await bot.send_message(message.from_user.id, text=texts.UNDER_CONSTRUCTION, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='other_reason')
+async def show_under_construction(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_purpose_difficult_to_answer_btn"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    subscribe_button = types.InlineKeyboardButton(buttons_texts.SUBSCRIBE, url='https://t.me/UnisonDating', callback_data='subscribe')
+    again_button = types.InlineKeyboardButton(buttons_texts.RESTART_REGISTRATION, callback_data='begin_registration')
+    keyboard.row(subscribe_button, again_button)
+    await bot.send_message(message.from_user.id, text=texts.UNDER_CONSTRUCTION, reply_markup=keyboard)
 
 # SET city as Moscow and ASK about goal of the relationship
 @dp.callback_query_handler(text='moscow')
 async def add_moscow(query: types.CallbackQuery, state: FSMContext):
     await Form.city.set()
     await state.update_data(city=texts.MOSCOW)
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_city_moscow_btn",
+      "user_properties": {
+        "City": "Москва"
+      }
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     seriously_button = types.InlineKeyboardButton(buttons_texts.SERIOUS_REL, callback_data='srsly')
     family_button = types.InlineKeyboardButton(buttons_texts.FAMILY, callback_data='family')
-    friends_button = types.InlineKeyboardButton(buttons_texts.FRIENDS, callback_data='under_constructions')
-    withou_obligations_button = types.InlineKeyboardButton(buttons_texts.FREE_USE, callback_data='under_construction')
-    no_answer_button = types.InlineKeyboardButton(buttons_texts.STUCK_ANSWER, callback_data='under_construction')
+    friends_button = types.InlineKeyboardButton(buttons_texts.FRIENDS, callback_data='friends')
+    withou_obligations_button = types.InlineKeyboardButton(buttons_texts.FREE_USE, callback_data='no_duty')
+    no_answer_button = types.InlineKeyboardButton(buttons_texts.STUCK_ANSWER, callback_data='other_reason')
     keyboard.add(seriously_button)
     keyboard.add(family_button)
     keyboard.add(friends_button)
@@ -356,13 +585,30 @@ async def add_moscow(query: types.CallbackQuery, state: FSMContext):
 async def add_saintp(query: types.CallbackQuery, state: FSMContext):
     await Form.city.set()
     await state.update_data(city=texts.SAINT_PETERSBURG)
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_city_peterburg_btn",
+      "user_properties": {
+        "City": "Санкт-Петербург"
+      }
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     seriously_button = types.InlineKeyboardButton(buttons_texts.SERIOUS_REL, callback_data='srsly')
     family_button = types.InlineKeyboardButton(buttons_texts.FAMILY, callback_data='family')
-    friends_button = types.InlineKeyboardButton(buttons_texts.FRIENDS, callback_data='under_constructions')
-    withou_obligations_button = types.InlineKeyboardButton(buttons_texts.FREE_USE, callback_data='under_construction')
-    no_answer_button = types.InlineKeyboardButton(buttons_texts.STUCK_ANSWER, callback_data='under_construction')
+    friends_button = types.InlineKeyboardButton(buttons_texts.FRIENDS, callback_data='friends')
+    withou_obligations_button = types.InlineKeyboardButton(buttons_texts.FREE_USE, callback_data='no_duty')
+    no_answer_button = types.InlineKeyboardButton(buttons_texts.STUCK_ANSWER, callback_data='other_reason')
     keyboard.add(seriously_button)
     keyboard.add(family_button)
     keyboard.add(friends_button)
@@ -375,12 +621,30 @@ async def add_saintp(query: types.CallbackQuery, state: FSMContext):
 async def add_samara(query: types.CallbackQuery, state: FSMContext):
     await Form.city.set()
     await state.update_data(city=texts.SAMARA)
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_city_moscow_btn",
+      "user_properties": {
+        "City": "Самара"
+      }
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
+    await state.reset_state(with_data=False)
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     seriously_button = types.InlineKeyboardButton(buttons_texts.SERIOUS_REL, callback_data='srsly')
     family_button = types.InlineKeyboardButton(buttons_texts.FAMILY, callback_data='family')
-    friends_button = types.InlineKeyboardButton(buttons_texts.FRIENDS, callback_data='under_constructions')
-    withou_obligations_button = types.InlineKeyboardButton(buttons_texts.FREE_USE, callback_data='under_construction')
-    no_answer_button = types.InlineKeyboardButton(buttons_texts.STUCK_ANSWER, callback_data='under_construction')
+    friends_button = types.InlineKeyboardButton(buttons_texts.FRIENDS, callback_data='friends')
+    withou_obligations_button = types.InlineKeyboardButton(buttons_texts.FREE_USE, callback_data='no_duty')
+    no_answer_button = types.InlineKeyboardButton(buttons_texts.STUCK_ANSWER, callback_data='other_reason')
     keyboard.add(seriously_button)
     keyboard.add(family_button)
     keyboard.add(friends_button)
@@ -393,13 +657,30 @@ async def add_samara(query: types.CallbackQuery, state: FSMContext):
 async def add_nomad(query: types.CallbackQuery, state= FSMContext):
     await Form.city.set()
     await state.update_data(city=texts.NOMAD)
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_city_moscow_btn",
+      "user_properties": {
+        "City": "Кочевник"
+      }
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     seriously_button = types.InlineKeyboardButton(buttons_texts.SERIOUS_REL, callback_data='srsly')
     family_button = types.InlineKeyboardButton(buttons_texts.FAMILY, callback_data='family')
-    friends_button = types.InlineKeyboardButton(buttons_texts.FRIENDS, callback_data='under_constructions')
-    withou_obligations_button = types.InlineKeyboardButton(buttons_texts.FREE_USE, callback_data='under_construction')
-    no_answer_button = types.InlineKeyboardButton(buttons_texts.STUCK_ANSWER, callback_data='under_construction')
+    friends_button = types.InlineKeyboardButton(buttons_texts.FRIENDS, callback_data='friends')
+    withou_obligations_button = types.InlineKeyboardButton(buttons_texts.FREE_USE, callback_data='no_duty')
+    no_answer_button = types.InlineKeyboardButton(buttons_texts.STUCK_ANSWER, callback_data='other_reason')
     keyboard.add(seriously_button)
     keyboard.add(family_button)
     keyboard.add(friends_button)
@@ -412,6 +693,20 @@ async def add_nomad(query: types.CallbackQuery, state= FSMContext):
 async def add_reason_srsly(query: types.CallbackQuery, state: FSMContext):
     await Form.reason.set()
     await state.update_data(reason=texts.SERIOUS_REL)
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_purpose_serious_btn"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     recomendations_button = types.InlineKeyboardButton(buttons_texts.PHOTO_RECOMENDATION, callback_data='recomendations')
@@ -425,6 +720,20 @@ async def add_reason_srsly(query: types.CallbackQuery, state: FSMContext):
 async def add_reason_family(query: types.CallbackQuery, state: FSMContext):
     await Form.reason.set()
     await state.update_data(reason=texts.FAMILY)
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": "userId",
+      "event_type": "bot_reg_purpose_family_btn"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     recomendations_button = types.InlineKeyboardButton(buttons_texts.PHOTO_RECOMENDATION, callback_data='recomendations')
@@ -441,10 +750,22 @@ async def ad_photo(query: types.CallbackQuery):
 # DOWNLOADING MAIN PHOTO OF PROFILE. BECOURSE WE NEED TO FORWARD IT TO MODERATION CHAT
 @dp.message_handler(state=Form.profile_photo, content_types=types.ContentTypes.PHOTO)
 async def download_photo(message: types.Message, state: FSMContext):
-    file_id = message.photo[-1].file_id
     await message.photo[-1].download(destination_file='./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id)) # DOWNLOADIN MAIN PHOTO 
-    profile_photo = './pic/profiles/%s/main_profile_photo.jpg' % (str(message.from_user.id)) # PATH to the MAIN PHOTO
-    await state.update_data(profile_photo=profile_photo)
+    await state.update_data(profile_photo = './pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id)) # PATH to the MAIN PHOTO
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_profile_photo_sent"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     confirm_button = types.InlineKeyboardButton(buttons_texts.YES, callback_data='confirm_photo')
@@ -464,7 +785,21 @@ async def end_basic_registration(query: types.CallbackQuery):
 
 # SHOWING recomendations to uploading PHOTOS
 @dp.callback_query_handler(text='recomendations')
-async def show_recomendation(query: types.CallbackQuery):
+async def show_recomendation(query: types.CallbackQuery, state:FSMContext):
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_guidelines_btn"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     upload_photo_button = types.InlineKeyboardButton(buttons_texts.UPLOAD_PHOTO, callback_data='upload_main_photo')
     keyboard.add(upload_photo_button)
@@ -495,7 +830,21 @@ async def upload_three_photo(message: types.Message):
 @dp.message_handler(state=Form.first_side_photo, content_types=types.ContentTypes.PHOTO)
 async def upload_first_photo(message: types.Message, state: FSMContext):
     await message.photo[-1].download(destination_file='./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
-    user_form.first_photo = './pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id)
+    await state.update_data(first_photo = './pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_profile_dataset_photo1_sent"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     await bot.send_message(message.from_user.id, text=texts.SECOND_PHOTO)
     await Form.second_side_photo.set() # also we can use "state.next()"
@@ -503,7 +852,21 @@ async def upload_first_photo(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Form.second_side_photo, content_types=types.ContentTypes.PHOTO)
 async def upload_second_photo(message: types.Message, state: FSMContext):
     await message.photo[-1].download(destination_file='./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
-    user_form.second_photo = './pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id)
+    await state.update_data(second_photo = './pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_profile_dataset_photo2_sent"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     await bot.send_message(message.from_user.id, text=texts.THIRD_PHOTO)
     await Form.third_side_photo.set() # also we can use "state.next()"
@@ -511,13 +874,96 @@ async def upload_second_photo(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Form.third_side_photo, content_types=types.ContentTypes.PHOTO)
 async def upload_third_photo(message: types.Message, state: FSMContext):
     await message.photo[-1].download(destination_file='./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
-    user_form.third_photo = './pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id)
+    await state.update_data(third_photo = './pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
+    data = await state.get_data()
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_reg_profile_dataset_photo3_sent"
+    }
+  ]
+})
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
     await state.reset_state(with_data=False)
     inline_keyboard = types.InlineKeyboardMarkup(resize_true = True)
     chek_button = types.InlineKeyboardButton(buttons_texts.CHECK_EXTRA_PHOTOS, callback_data='show_extra_photos')
     next_step_button = types.InlineKeyboardButton(buttons_texts.NEXT_STEP, callback_data='start_alogrithm_educating')
     inline_keyboard.row(chek_button, next_step_button)
     await bot.send_message(message.from_user.id, text=texts.ALL_PHOTOS, reply_markup=inline_keyboard)
+    #--------------------------TRANSFORMIN IMGs TO  base64 string-------------------
+    b64_profile_photo = ''
+    b64_first_photo = ''
+    b64_second_photo = ''
+    b64_third_photo = ''
+    with open(data['profile_photo']) as img_file:
+      b64_profile_photo = base64.b64encode(img_file.read())
+    with open(data['first_photo']) as img_file:
+      b64_first_photo = base64.b64encode(img_file.read())
+    with open(data['second_photo']) as img_file:
+      b64_second_photo = base64.b64encode(img_file.read())
+    with open(data['third_photo']) as img_file:
+      b64_third_photo = base64.b64encode(img_file.read())
+    #-------------------------------------------------------------------------------
+    #------------------POST request to upload photos to profile on server-----------
+    requests.post(url='https://server.unison.dating/user/add_photos/self?user_id=%s'%data['user_id'], json={
+  "main_photo": b64_profile_photo,
+  "other_photos": [
+    b64_first_photo,
+    b64_second_photo,
+    b64_third_photo
+  ]
+})
+    #-------------------------------------------------------------------------------
+    #------------------POST request to send profile to moderation-------------------
+    request = ''
+    if not data['moderated'] or not data['moderated_photo'] or not data['moderated_info'] or not data['pass_moderation']:
+      # SENDING INFO ABOUT USER TO MODER CHAT
+      requests.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendMessage', json={
+  "chat_id": "-1001693622168",
+  "text": "Пользователь требует ПОВТОРНОЙ модерации: \n UserID: %s; \n Имя: %s; \n Пол: %s; \n День рождения: %s; \n Город: %s; \n Цель знакомства: %s; " % 
+                                                      (data['user_id'], data['name'], data['gender'], data['birthday'], data['city'], data['reason'])
+})  
+    else:
+      requests.post(url='', json={
+"chat_id":"-1001693622168",
+"text": "Новый пользователь требует модерации: \n UserID: %s; \n Имя: %s; \n Пол: %s; \n День рождения: %s; \n Город: %s; \n Цель знакомства: %s; " % 
+                                                (data['user_id'], data['name'], data['gender'], data['birthday'], data['city'], data['reason'])
+
+})
+    #-------------------------------------------------------------------------------
+    #-------POST request to send profile main photo-------------------------------
+    requests.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendPhoto', json={
+"chat_id":"-1001693622168",
+"photo": data['profile_photo'],
+"caption":"Фото профиля"
+})
+    #-------------------------------------------------------------------------------
+    #-------------------------POST request to send additional photos----------------
+    requests.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendMediaGroup', json={
+  "chat_id": "-1001693622168",
+  "media": [
+    {
+      "type": "photo",
+      "media": data['first_photo'],
+      "caption": "Дополнительные фото"
+    },
+    {
+      "type": "photo",
+      "media": data['second_photo']
+    },
+    {
+      "type": "photo",
+      "media": data['third_photo']
+    }
+  ]
+})
+  
+
 # CONFIRMING EXTRA PHOTOS BEFORE UPLOADING
 @dp.callback_query_handler(text='show_extra_photos')
 async def show_extra_photos(message: types.Message):
@@ -535,9 +981,6 @@ async def show_extra_photos(message: types.Message):
 # UPLOADING PHOTOS TO SERVER
 @dp.callback_query_handler(text='start_alogrithm_educating')
 async def add_other_photos(query: types.CallbackQuery):
-    # ----- блок отправки фотографий на сервер ------
-    #
-    # -----------------------------------------------
     inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     letsgo_button = types.InlineKeyboardButton(buttons_texts.LETS_GO, callback_data='rules_of_studing')
     inline_keyboard.add(letsgo_button)
@@ -551,206 +994,268 @@ async def show_rules_of_studing(query: types.CallbackQuery):
     inline_keyboard.add(begin_button)
     await query.message.edit_text(text=texts.RULE_STUDING, reply_markup=inline_keyboard)
 
-
 @dp.callback_query_handler(text='first_educational_photo')
+async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    #---------------------------------------------------------------------------------------
+    #------------------------------POST request for some STATISTICS-------------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_training_start_btn"
+    }
+  ]
+})
+    #---------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------
+    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+    await state.reset_state(with_data=False)
+    inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+    if data['algorithm_steps'] > 0 and data['likes'] > 0 and data['super_likes'] > 0:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    elif data['algorithm_steps'] > 0 and data['likes'] == 0 and data['super_likes'] > 0:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    elif data['algorithm_steps'] > 0 and data['likes'] > 0 and data['super_likes'] == 0:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    elif data['algorithm_steps'] > 0 and data['likes'] == 0 and data['super_likes'] == 0:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    else:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
+    #------------------------------------------------------------------------------------------------------------------------------------------------------
+    #--------------------------------------------------POST request to GET PHOTO and MAKING DATASET--------------------------------------------------------
+    request = requests.post(url='https://server.unison.dating/user/init?user_id=%s' % data['user_id'], json={
+  "next_id": 31-data['algorithm_steps'],
+})
+    #------------------------------------------------------------------------------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------------------------------------------------------------------------------
+    await query.message.delete()
+    await bot.send_photo(data['chat_id'], photo=request['url'], reply_markup=inline_keyboard)
+    await state.reset_state(with_data=False)
+
 @dp.callback_query_handler(text='unlike_educate_algorithm')
 async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    if data['algorithm_steps'] > 0 and data['likes'] > 0 and data['super_likes'] > 0:
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
-        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-        inline_keyboard.row(likes_button, super_like_button)
-        inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
-    elif data['algorithm_steps'] > 0 and data['likes'] == 0 and data['super_likes'] > 0:
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
-        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
-        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-        inline_keyboard.row(likes_button, super_like_button)
-        inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
-    elif data['algorithm_steps'] > 0 and data['likes'] > 0 and data['super_likes'] == 0:
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
-        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
-        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-        inline_keyboard.row(likes_button, super_like_button)
-        inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
-    elif data['algorithm_steps'] > 0 and data['likes'] == 0 and data['super_likes'] == 0:
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
-        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
-        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
-        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-        inline_keyboard.row(likes_button, super_like_button)
-        inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
-    else:
-        pass
+    #---------------------------------------------------------------------------------------
+    #------------------------------POST request for some STATISTICS-------------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_training_dislike_btn"
+    }
+  ]
+})
+    #---------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------
+    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+    await state.update_data(algorithm_steps=data['algorithm_steps']-1)
     await state.reset_state(with_data=False)
-
+    inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+    if data['algorithm_steps'] > 0 and data['likes'] > 0 and data['super_likes'] > 0:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    elif data['algorithm_steps'] > 0 and data['likes'] == 0 and data['super_likes'] > 0:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    elif data['algorithm_steps'] > 0 and data['likes'] > 0 and data['super_likes'] == 0:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    elif data['algorithm_steps'] > 0 and data['likes'] == 0 and data['super_likes'] == 0:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    else:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']), show_alert=True)
+    request = requests.post(url='https://server.unison.dating/user/init?user_id=%s' % data['user_id'], json={
+  "next_id": 31-data['algorithm_steps'],
+  "answer": {
+    30-data['algorithm_steps']: "0"
+  }
+})
+    await query.message.delete()
+    await bot.send_photo(data['chat_id'], photo=request['url'], reply_markup=inline_keyboard)
+    await state.reset_state(with_data=False)
 
 @dp.callback_query_handler(text='like_educate_algorithm')
 async def second_algorithm_education(query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
+    #---------------------------------------------------------------------------------------
+    #------------------------------POST request for some STATISTICS-------------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_training_like_btn"
+    }
+  ]
+})
+    #---------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------
+    await state.update_data(likes=data['likes']-1)
+    await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+    await state.reset_state(with_data=False)
+    inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
     if data['algorithm_steps']-1 > 0 and data['likes']-1 > 0 and data['super_likes'] > 0:
-        await state.update_data(likes=data['likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
         super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
         likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
         inline_keyboard.row(likes_button, super_like_button)
         inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes']-1, data['super_likes']), show_alert=True)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
     elif data['algorithm_steps']-1 > 0 and data['likes']-1 == 0 and data['super_likes'] > 0:
-        await state.update_data(likes=data['likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
         super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
         likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
-        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
         inline_keyboard.row(likes_button, super_like_button)
         inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes']-1, data['super_likes']), show_alert=True)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
-        pass
     elif data['algorithm_steps']-1 > 0 and data['likes']-1 > 0 and data['super_likes'] == 0:
-        await state.update_data(likes=data['likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
         super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
         likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
         inline_keyboard.row(likes_button, super_like_button)
         inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes']-1, data['super_likes']), show_alert=True)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
-        pass
     elif data['algorithm_steps']-1 > 0 and data['likes']-1 == 0 and data['super_likes'] == 0:
-        await state.update_data(likes=data['likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
         super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
         likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
         unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
         inline_keyboard.row(likes_button, super_like_button)
         inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes']-1, data['super_likes']), show_alert=True)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
-        pass
     else:
-        pass
-
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes']-1, data['super_likes']), show_alert=True)
+    #------------------------------------------------------------------------------------------------------------------------------------------------------
+    #--------------------------------------------------POST request to GET PHOTO and MAKING DATASET--------------------------------------------------------
+    request = requests.post(url='https://server.unison.dating/user/init?user_id=%s' % data['user_id'], json={
+  "next_id": 31-data['algorithm_steps'],
+  "answer": {
+    30-data['algorithm_steps']: "1"
+  }
+})
+    #------------------------------------------------------------------------------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------------------------------------------------------------------------------
+    await query.message.delete()
+    await bot.send_photo(data['chat_id'], photo=request['url'], reply_markup=inline_keyboard)
 
 @dp.callback_query_handler(text='superlike_educate_algorithm')
 async def third_algorithm_education(query: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
+    #---------------------------------------------------------------------------------------
+    #------------------------------POST request for some STATISTICS-------------------------
+    requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_training_superlike_btnt"
+    }
+  ]
+})
+    #---------------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------
+    await state.update_data(super_likes=data['super_likes']-1)
+    await state.update_data(algorithm_steps=data['algorithm_steps']-1)
+    await state.reset_state(with_data=False)
+    inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
     if data['algorithm_steps']-1 > 0 and data['likes'] > 0 and data['super_likes']-1 > 0:
-        await state.update_data(super_likes=data['super_likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
         super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
         likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
         unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
         inline_keyboard.row(likes_button, super_like_button)
         inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']-1), show_alert=True)
-        await state.update_data(super_likes=data['super_likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
     elif data['algorithm_steps']-1 > 0 and data['likes'] == 0 and data['super_likes']-1 > 0:
-        await state.update_data(super_likes=data['super_likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
         super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
         likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
         unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
         inline_keyboard.row(likes_button, super_like_button)
         inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']-1), show_alert=True)
-        await state.update_data(super_likes=data['super_likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
     elif data['algorithm_steps']-1 > 0 and data['likes'] > 0 and data['super_likes']-1 == 0:
-        await state.update_data(super_likes=data['super_likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
         super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
         likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
         unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
         inline_keyboard.row(likes_button, super_like_button)
         inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']-1), show_alert=True)
-        await state.update_data(super_likes=data['super_likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
     elif data['algorithm_steps']-1 > 0 and data['likes'] == 0 and data['super_likes']-1 == 0:
-        await state.update_data(super_likes=data['super_likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
         inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
         super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
         likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
         unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
         inline_keyboard.row(likes_button, super_like_button)
         inline_keyboard.add(unlike_button)
-        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']-1), show_alert=True)
-        await state.update_data(super_likes=data['super_likes']-1)
-        await state.update_data(algorithm_steps=data['algorithm_steps']-1)
-        await state.reset_state(with_data=False)
-        file = open('./pic/testing_thirty/%s.jpg' % (32-data['algorithm_steps']), 'rb')
-        await query.message.delete()
-        await bot.send_photo(data['chat_id'], photo=file, reply_markup=inline_keyboard)
-    
+    else:
+        super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+        likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+        unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final')
+        inline_keyboard.row(likes_button, super_like_button)
+        inline_keyboard.add(unlike_button)
+    await query.answer(text=buttons_texts.ANSWER_STUDY % (31-data['algorithm_steps'], data['likes'], data['super_likes']-1), show_alert=True)
+    #------------------------------------------------------------------------------------------------------------------------------------------------------
+    #--------------------------------------------------POST request to GET PHOTO and MAKING DATASET--------------------------------------------------------
+    request = requests.post(url='https://server.unison.dating/user/init?user_id=%s' % data['user_id'], json={
+  "next_id": 31-data['algorithm_steps'],
+  "answer": {
+    30-data['algorithm_steps']: "2"
+  }
+})
+    #------------------------------------------------------------------------------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------------------------------------------------------------------------------
+    await query.message.delete()
+    await bot.send_photo(data['user_id'], photo=request['url'], reply_markup=inline_keyboard)
+
+
+@dp.callback_query_handler(text='final')
+async def registration_final(message: types.Message, state: FSMContext):
+    await bot.send_message(message.chat.id, text=texts.FINAL_MESSAGE)
+    pass
+
+@dp.callback_query_handler()
+async def every_message(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    if not data['moderated']:
+        pass
+    pass
+
+
+async def moderated_or_not(state: FSMContext):
+  data = await state.get_data()
+
+  pass
+
 
 if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)    
+    executor.start_polling(dp, skip_updates=True, on_startup=moderated_or_not)    
