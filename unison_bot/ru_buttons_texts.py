@@ -123,3 +123,19 @@ COMUNICATION = 'Не понравилось общение'
 IGNORE = 'Собеседник не отвечает'
 
 OTHER = 'Другое'
+
+LIKE_LOOK = 'Понравился/понравилась'
+
+OK_MEET = 'Состоялась'
+
+NOT_OK_MEET = 'Не состоялась по причине'
+
+MEETING_BEHAVIOR = 'Не понравилось поведение'
+
+MEETING_PLACE = 'Не понравилось место'
+
+LIKE_MEETING = "Очень понравилось"
+
+NEUTRAL_MEETING = "Ничего особенного"
+
+DONT_LIKE_MEETING = "Не понравилось"

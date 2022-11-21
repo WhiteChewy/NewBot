@@ -1,6 +1,7 @@
 import os
 import aioschedule
 import logging
+import datetime
 import requests
 import ru_message_texts as texts
 import ru_buttons_texts as buttons_texts
@@ -9,27 +10,36 @@ import asyncio
 import base64
 
 from aiogram.dispatcher.filters import Filter
-from User import User
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram import Bot, Dispatcher, executor, types
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from config import TOKEN
 
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
+scheduler = AsyncIOScheduler()
 
 # STATES FOR STATE MACHINE
 class Form(StatesGroup):
   help = State()
-  has_match=State()
   why_dont_like=State()
   upload_photo_to_match = State()
   get_help_message = State()
+  callback_other = State()
+  unlike_meeting = State()
+  
+  has_match=State()
+  one_day_to_unmatch = State()
+  ending_match = State()
+  no_match=State()
+  stop_match = State()
 # profile for testing
 data = {
+    # PROFILE
     'name': 'Никита',
     'city': 'Санкт-Петербург',
     'gender': 'М',
@@ -40,21 +50,32 @@ data = {
     'second_photo': './pic/profiles/877505237/second_extra_photo.jpg',
     'third_photo': './pic/profiles/877505237/third_extra_photo.jpg',
     'user_id': 87750523,
-    'chat_id': 87750523,
-    'status_match': 0,
     'subscribtion': False,
+    'reason_to_stop': '',
+    'was_meeting' : '',
+    'meeting_reaction' : '',
+    'why_meeting_bad' : '',
+    # GENERAL INFO AND TAGS
+    'chat_id': 87750523,
+    'status_match': False,
     'payment_url': '',
     'help': False,
     'tag_first_time': True,
     'tag_button_press': False,
     'tag_comunication_help': False,
-    'reason_to_stop': '',
-    'match_id': 891872881 # ILYA SUK
+    #MATCH INFO
+    'match_id': 891872881,
+    'match_photo': '',
+    'match_city' : '',
+    'match_name' : '',
+    'match_reason' : ''
 }
 
+@dp.message_handler(state=Form.no_match)
 @dp.message_handler(command='start')
 async def messaging_start(query: types.CallbackQuery, state: FSMContext):
     #data = await state.get_data()
+    schedule_jobs(state=state)
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     if data['subscribtion']:
         subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscribtion')
@@ -65,8 +86,10 @@ async def messaging_start(query: types.CallbackQuery, state: FSMContext):
     pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
     keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
     await bot.send_message(data['chat_id'], text=texts.MAIN_MENU, reply_markup=keyboard)
-    if data['status_match']:
-      Form.has_match.set()
+    if state != Form.no_match(): 
+      Form.no_match.set()
+
+
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #------------------------------CHECKING, GETTING AND CANCEL SUBSCRIBTION----------------------------------------------------------------------------------------------------------------------------
 @dp.callback_query_handler(text='have_subscribtion')
@@ -255,6 +278,8 @@ async def help_message(message: types.Message, state: FSMContext):
   "chat_id": "-776565232",
   "text": texts.HELP_MESSAGE % (data['user_id'], data['name'], message.text, data['user_id'])
   })
+    await state.reset_state(with_data=False)
+    Form.has_match.set()
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -285,7 +310,7 @@ async def request_when_tg_pressed(message: types.Message, state: FSMContext):
 # **************************************************************************************************************************************************************************************************
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# ----------------------PAUSE mating----------------------------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------PAUSE MATCHING--------------------------------------------------------------------------------------------------------------------------------------------------------------
 @dp.callback_query_handler(text='paused_main_menu')
 async def pause_menu(query: types.CallbackQuery,state: FSMContext):
   #data = await state.get_data()
@@ -371,7 +396,7 @@ async def start_communicating(query: types.CallbackQuery, state: FSMContext):
   #await state.update_data(tag_begin_comunocation = True)
   data['tag_begin_comunication'] = True
   #await state.update_data(status_match = 0)
-  data['status_match'] = 0
+  data['status_match'] = True
   #await state.update_data(tag_first_time = False)
   data['tag_first_time'] = False
   await bot.send_message(data['user_id'], text=texts.NEW_MATCH)
@@ -672,6 +697,7 @@ async def set_reason(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(text='send_photo')
 async def send_photo_to_match(query: types.CallbackQuery, state: FSMContext):
   await query.message.edit_text(text=texts.UPLOAD_PHOTO_TO_MATCH)
+  await state.reset_state(with_data=False)
   await Form.upload_photo_to_match.set()
 @dp.message_handler(state=Form.upload_photo_to_match, content_types=types.ContentType.PHOTO)
 async def upload_photo_to_match(message: types.Message, state: FSMContext):
@@ -689,7 +715,10 @@ async def upload_photo_to_match(message: types.Message, state: FSMContext):
 })
   #-----------------------------------------------------------------
   # WE FORWARDING PHOTO SO IT CAN BE DONE WITH ID OF IMAGE
-  bot.send_photo(data['match_id'], photo=photo_id)
+  await state.reset_state(with_data=False)
+  if data['status_match']: 
+    Form.has_match.set()
+  await bot.send_photo(data['match_id'], photo=photo_id)
 # **************************************************************************************************************************************************************************************************
 # **************************************************************************************************************************************************************************************************
 
@@ -720,10 +749,425 @@ async def get_comunication_help_message(message: types.Message, state: FSMContex
     }
   ]
 })
-  
-  pass
+  #----------------------------------------------------------------------------------
+  if data['status_match']:
+    Form.has_match.set()
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+# **************************************************************************************************************************************************************************************************
+# *****************************ONE DAY TO END OF COMMUNICATION**************************************************************************************************************************************
+@dp.message_handler(state=Form.one_day_to_unmatch)
+async def info_one_day_to_unmatch(message: types.Message, state: FSMContext):
+  data = await state.get_data()
+  bot.send_message(data['chat_id'], text=texts.ONE_DAY_TO_UNMATCH % data['match_name'])
+  pass
+# **************************************************************************************************************************************************************************************************
+# **************************************************************************************************************************************************************************************************
+
+
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------TIME TO END COMUNICATING----------------------------------------------------------------------------------------------------------------------------------------------
+@dp.message_handler(state=Form.no_match)
+async def communication_time_is_gone(message: types.Message, state: FSMContext):
+  await state.update_data(match_id = 0)
+  await state.update_data(match_photo = '')
+  await state.update_data(match_name = '')
+  await state.update_data(match_city = '')
+  await state.update_data(match_reason = '')
+  await state.update_data(reason_to_stop = 'time_gone')
+  data = await state.get_data()
+  # --------------------------------------------------------
+  # -------------POST request for some statistics-----------
+  requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "match_stop_time_gone"
+    }
+  ]
+})
+  # --------------------------------------------------------
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  dont_like_look_button = types.InlineKeyboardButton(text=buttons_texts.LOOK, callback_data='callback_look')
+  dont_like_comunication_button = types.InlineKeyboardButton(text=buttons_texts.COMUNICATION, callback_data='callback_comunication')
+  like_button = types.InlineKeyboardButton(text=buttons_texts.LIKE_LOOK, callback_data='callback_like')
+  other_button = types.InlineKeyboardButton(text=buttons_texts.OTHER, callback_data='callback_other')
+  keyboard.add(dont_like_look_button)
+  keyboard.add(dont_like_comunication_button)
+  keyboard.add(like_button)
+  keyboard.add(other_button)
+  bot.send_message(data['user_id'], text=texts.CALLBACK, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='callback_look')
+async def dont_like_look(message: types.Message, state: FSMContext):
+  data = await state.get_data()
+  # ----------------------------------------------------------------
+  # -----------POST request for some STATISTICS---------------------
+  requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "reason_stop_don't_like"
+    }
+  ]
+})
+  # ----------------------------------------------------------------
+  await state.update_data(reason_to_stop='не понравился внешне')
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  ok_meeting_button = types.InlineKeyboardButton(text=buttons_texts.OK_MEET, callback_data='ok_meeting')
+  unlike_meeting_button = types.InlineKeyboardButton(text=buttons_texts.NOT_OK_MEET, callback_data='unlike_meeting')
+  keyboard.add(ok_meeting_button)
+  keyboard.add(unlike_meeting_button)
+  bot.send_message(data['user_id'], text=texts.CALLBACK_MEETING % data['match_name'], reply_markup=keyboard)
+
+@dp.callback_query_handler(text='callback_comunication')
+async def dont_like_comunication(message: types.Message, state: FSMContext):
+  data = await state.get_data()
+  # ----------------------------------------------------------------
+  # -----------POST request for some STATISTICS---------------------
+  requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "reason_stop_don't_like_messaging"
+    }
+  ]
+})
+  # ----------------------------------------------------------------
+  await state.update_data(reason_to_stop='не понравилось общение')
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  ok_meeting_button = types.InlineKeyboardButton(text=buttons_texts.OK_MEET, callback_data='ok_meeting')
+  unlike_meeting_button = types.InlineKeyboardButton(text=buttons_texts.NOT_OK_MEET, callback_data='unlike_meeting')
+  keyboard.add(ok_meeting_button)
+  keyboard.add(unlike_meeting_button)
+  bot.send_message(data['user_id'], text=texts.CALLBACK_MEETING % data['match_name'], reply_markup=keyboard)
+
+@dp.callback_query_handler(text='callback_like')
+async def everything_ok(message: types.Message, state: FSMContext):
+  data = await state.get_data()
+  # ----------------------------------------------------------------
+  # -----------POST request for some STATISTICS---------------------
+  requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "reason_stop_like_but_time_gone"
+    }
+  ]
+})
+  # ----------------------------------------------------------------
+  await state.update_data(reason_to_stop='Понравился, но время общения истекло')
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  ok_meeting_button = types.InlineKeyboardButton(text=buttons_texts.OK_MEET, callback_data='ok_meeting')
+  unlike_meeting_button = types.InlineKeyboardButton(text=buttons_texts.NOT_OK_MEET, callback_data='unlike_meeting')
+  keyboard.add(ok_meeting_button)
+  keyboard.add(unlike_meeting_button)
+  bot.send_message(data['user_id'], text=texts.CALLBACK_MEETING % data['match_name'], reply_markup=keyboard)
+
+@dp.callback_query_handler(text='callback_other')
+async def callback_other(message: types.Message, state: FSMContext):
+  data = await state.get_data()
+  # ----------------------------------------------------------------
+  # -----------POST request for some STATISTICS---------------------
+  requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "reason_stop_other"
+    }
+  ]
+})
+  # ----------------------------------------------------------------
+  await bot.send_message(data['user_id'], text=texts.CALLBACK_REASON)
+  Form.callback_other.set()
+@dp.message_handler(state=Form.callback_other, content_types= types.ContentTypes.TEXT)
+async def set_message_other(message: types.Message, state: FSMContext):
+  await state.update_data(reason_to_stop = message.text)
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  ok_meeting_button = types.InlineKeyboardButton(text=buttons_texts.OK_MEET, callback_data='ok_meeting')
+  unlike_meeting_button = types.InlineKeyboardButton(text=buttons_texts.NOT_OK_MEET, callback_data='unlike_meeting')
+  keyboard.add(ok_meeting_button)
+  keyboard.add(unlike_meeting_button)
+  await bot.send_message(data['user_id'], text=texts.CALLBACK_MEETING % data['match_name'], reply_markup=keyboard)
+
+@dp.callback_query_handler(text='unlike_meeting')
+async def set_was_meeting_no(query: types.CallbackQuery, state: FSMContext):
+  await state.update_data(was_meeting='Встреча не состоялась')
+  #------------------------------------------------------------------
+  #-----------------POST requset for some STATISTICS-----------------
+  requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "meeting_not_happens"
+    }
+  ]
+})
+  #------------------------------------------------------------------
+  data = await state.get_data()
+  await query.message.edit_text(data['user_id'], text=texts.REASON_MEETING)
+  Form.unlike_meeting.set()
+@dp.message_handler(state=Form.unlike_meeting, content_types= types.ContentTypes.TEXT)
+async def set_meeting_reaction(message: types.Message, state: FSMContext):
+  await state.update_data(meeting_reaction = message.text)
+  state.reset_state(with_data=False)
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  dont_like_look_button = types.InlineKeyboardButton(text=buttons_texts.LOOK, callback_data='meeting_look')
+  dont_like_behavior_button = types.InlineKeyboardButton(text=buttons_texts.MEETING_BEHAVIOR, callback_data='meeting_behavior')
+  dont_like_place_button = types.InlineKeyboardButton(text=buttons_texts.MEETING_PLACE, callback_data='meeting_place')
+  keyboard.add(dont_like_look_button)
+  keyboard.add(dont_like_behavior_button)
+  keyboard.add(dont_like_place_button)
+  await bot.send_message(data['user_id'], text=texts.ABOUT_MEETING, reply_markup=keyboard)
+  pass
+
+
+@dp.callback_query_handler(text='ok_meeting')
+async def set_was_meeting_yes(query: types.CallbackQuery, state: FSMContext):
+  await state.update_data(was_meeting='Встреча состоялась')
+  #------------------------------------------------------------------
+  #-----------------POST requset for some STATISTICS-----------------
+  requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "meeting_happens"
+    }
+  ]
+})
+  #------------------------------------------------------------------
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  like_meeting_button = types.InlineKeyboardButton(text=buttons_texts.LIKE_MEETING, callback_data='all_like')
+  neutral_meeting_button = types.InlineKeyboardButton(text=buttons_texts.NEUTRAL_MEETING, callback_data='neutral_meeting')
+  dont_like_button = types.InlineKeyboardButton(text=buttons_texts.DONT_LIKE_MEETING, callback_data='dont_like_meeting')
+  keyboard.add(like_meeting_button)
+  keyboard.add(neutral_meeting_button)
+  keyboard.add(dont_like_button)
+  await query.message.edit_text(text=texts.LIKE_ABOT_MEETING, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='all_like')
+async def set_meeting_reaction_ok(query: types.CallbackQuery, state: FSMContext):
+  await state.update_data(meeting_reaction='Встреча понравилась')
+  await query.message.edit_text(text=texts.END_CALLBACK)
+
+
+@dp.callback_query_handler(text='neutral_meeting')
+async def set_meeting_reaction_neutral(query: types.CallbackQuery, state: FSMContext):
+  await state.update_data(meeting_reaction = 'Ничего особенного')
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  dont_like_look_button = types.InlineKeyboardButton(text=buttons_texts.LOOK, callback_data='meeting_look')
+  dont_like_behavior_button = types.InlineKeyboardButton(text=buttons_texts.MEETING_BEHAVIOR, callback_data='meeting_behavior')
+  dont_like_place_button = types.InlineKeyboardButton(text=buttons_texts.MEETING_PLACE, callback_data='meeting_place')
+  keyboard.add(dont_like_look_button)
+  keyboard.add(dont_like_behavior_button)
+  keyboard.add(dont_like_place_button)
+  await bot.send_message(data['user_id'], text=texts.ABOUT_MEETING, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='dont_like_meeting')
+async def set_meeting_reaction_negative(query: types.CallbackQuery, state: FSMContext):
+  await state.update_data(meeting_reaction = 'Не понравилась')
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  dont_like_look_button = types.InlineKeyboardButton(text=buttons_texts.LOOK, callback_data='meeting_look')
+  dont_like_behavior_button = types.InlineKeyboardButton(text=buttons_texts.MEETING_BEHAVIOR, callback_data='meeting_behavior')
+  dont_like_place_button = types.InlineKeyboardButton(text=buttons_texts.MEETING_PLACE, callback_data='meeting_place')
+  keyboard.add(dont_like_look_button)
+  keyboard.add(dont_like_behavior_button)
+  keyboard.add(dont_like_place_button)
+  await bot.send_message(data['user_id'], text=texts.ABOUT_MEETING, reply_markup=keyboard)
+  
+
+@dp.callback_query_handler(text='meeting_look')
+async def set_why_meeting_bad_look(query: types.CallbackQuery, state: FSMContext):
+  await state.update_data(why_meeting_bad='Не понравился внешне')
+  data = await state.get_data()
+  # --------------POST request to END MATCHING--------------
+  requests.post(url='https://server.unison.dating/user/stop_match?user_id=%s' % data['user_id'], json={
+  "reason": "Время истекло и %s" % data['reason_to_stop'],
+  "was_meeting": data["was_meeting"],
+  "meeting_reaction": data["meeting_reaction"],
+  "why_meeting_bad": data["why_meeting_bad"]
+})
+  # --------------------------------------------------------
+  await query.message.edit_text(text=texts.END_CALLBACK)
+  Form.stop_match.set()
+
+@dp.callback_query_handler(text='meeting_behavior')
+async def set_why_meeting_bad_behavior(query: types.CallbackQuery, state: FSMContext):
+  await state.update_data(why_meeting_bad='Не понравился внешне')
+  data = await state.get_data()
+  # --------------POST request to END MATCHING--------------
+  requests.post(url='https://server.unison.dating/user/stop_match?user_id=%s' % data['user_id'], json={
+  "reason": "Время истекло и %s" % data['reason_to_stop'],
+  "was_meeting": data["was_meeting"],
+  "meeting_reaction": data["meeting_reaction"],
+  "why_meeting_bad": data["why_meeting_bad"]
+})
+  # --------------------------------------------------------
+  await query.message.edit_text(text=texts.END_CALLBACK)
+  Form.stop_match.set()
+
+@dp.callback_query_handler(text='meeting_place')
+async def set_why_meeting_bad_place(query: types.CallbackQuery, state: FSMContext):
+  await state.update_data(why_meeting_bad='Не понравился внешне')
+  data = await state.get_data()
+  # --------------POST request to END MATCHING--------------
+  requests.post(url='https://server.unison.dating/user/stop_match?user_id=%s' % data['user_id'], json={
+  "reason": "Время истекло и %s" % data['reason_to_stop'],
+  "was_meeting": data["was_meeting"],
+  "meeting_reaction": data["meeting_reaction"],
+  "why_meeting_bad": data["why_meeting_bad"]
+})
+  # --------------------------------------------------------
+  await query.message.edit_text(text=texts.END_CALLBACK)
+  Form.stop_match.set()
+
+  @dp.message_handler(state=Form.stop_match)
+  async def stop_match(message: types.Message, state: FSMContext):
+    await state.update_data(match_id = 0)
+    await state.update_data(match_photo = '')
+    await state.update_data(match_city = '')
+    await state.update_data(match_reason='')
+    await state.update_data(reason_stop='')
+    data = await state.get_data()
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+    if data['subscribtion']:
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscribtion')
+    else:
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscribtions')
+    keyboard.add(subscribes_button)
+    await bot.send_message(data['user_id'], text=texts.END_DIALOG, reply_markup=keyboard)
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#***************************************************************************************************************************************************************************************************
+#***************************************************************************WANNA MEET**************************************************************************************************************
+@dp.callback_query_handler(text='wanna_meet')
+async def user_wanna_meet(query: types.CallbackQuery, state: FSMContext):
+  await state.reset_state(with_data=False)
+  #data = await state.get_data()
+  # -------------------------------------------------------
+  # -----POST request for UNISON THAT USER WANNA MEET------
+  requests.post(url='https://server.unison.dating/user/wanna_meet?user_id=%s'%data['user_id'], json={
+  "match_id": data['user_id']
+})
+  # -------------------------------------------------------
+  # -------------POST request for some STATISTICS----------
+  requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  "events": [
+    {
+      "user_id": data['user_id'],
+      "event_type": "bot_meeting_ask"
+    }
+  ]
+})
+  # -------------------------------------------------------
+  bot.send_message(data['user_id'], text=texts.WANNA_MEET)
+  # -------------------------------------------------------
+  # ---POST request to another USER that this wanna meet---
+  requests.post(url='https://api.smartsender.com/v1/contacts/%s/fire' % data['match_id'], headers={
+    'Authorization' : 'Bearer jc5u29SmevXUwVf2BX3tSyAuHEr4CGhNTwQVqcju4r6tTwelpTItann5Dfl8'
+  }, json={
+  "name": "meeting"
+})
+  Form.has_match.set()
+#***************************************************************************************************************************************************************************************************
+#***************************************************************************************************************************************************************************************************
+#ASK server if has match or not
+async def is_match():
+  # GET INFO ABOUT MATCH IF THERE IT MATCH RETURN TRUE
+  return True
+# CHECK USER ABOUT SUBSCRIBE
+async def is_premium(state: FSMContext):
+  data = await state.get_data()
+  if data['subscribtion']:
+    return True
+  else: return False
+# CHECK IF TODAY MONDAY
+async def is_monday(today: datetime.date):
+  if not today.weekday():
+    return True
+  else:
+    return False
+# SET STATE UNMATCHED
+async def set_state_unmatch(state: FSMContext):
+  await state.reset_state(with_data=False)
+  await state.update_data(has_match = False)
+  await state.update_data(match_id = 0)
+  await state.update_data(match_name = '')
+  await state.update_data(match_city = '')
+  await state.update_data(match_reason = '')
+  schedule_jobs()
+  Form.ending_match.set()
+# SET STATE ONE_DAY_TO_UNMATCH
+async def set_state_one_day_to_unmatch(state: FSMContext):
+  await state.reset_state(with_data=False)
+  scheduler.add_job(set_state_unmatch, 'data', datetime.date.today()+datetime.timedelta(days=1))
+  Form.one_day_to_unmatch.set()
+# SET STATE TO HAS_MATCH
+async def set_state_has_match(state: FSMContext):
+  await state.update_data(has_match=True)
+  scheduler.add_job(set_state_one_day_to_unmatch, 'date', datetime.date.today()+datetime.timedelta(days=6))
+  Form.has_match.set()
+
+async def schedule_jobs(state: FSMContext):
+  date_today = datetime.date.today
+  # IF USER NOT SUBSCRIBED
+  if not is_premium(state):
+    # IF TODAY IS MONDAY
+    if is_monday(date_today):
+      # CHECK SERVER IF THERE IS MATCHES
+      if is_match():
+        # IF THERE IS MATCH GET INFO ABOUT
+        m_id = 0
+        m_name = ''
+        m_city = ''
+        m_reason = ''
+        await state.update_data(match_id=m_id)
+        await state.update_data(match_name = m_name)
+        await state.update_data(match_city = m_city)
+        await state.update_data(match_reason = m_reason)
+        set_state_has_match(state=state)
+      # IF THERE IS NO MATCH REPEAT AFTER 10 MINUTES
+      else:
+        scheduler.add_job(schedule_jobs, data, datetime.datetime.now()+datetime.timedelta(minutes=10))
+    # IF TODAY IS NOT MONDAY
+    else:
+      # IF NOT MONDAY - REPEAT AFTER days_till_monday DAYS
+      days_till_monday = 7 - datetime.date.today().weekday()
+      timedelta = datetime.timedelta(days=days_till_monday)
+      scheduler.add_job(schedule_jobs, 'data', date_today+timedelta) # add job to scheduler
+  # IF USER SUBSCRIBED
+  else:
+    # CHECK SERVER IF THERE IS MATCHES
+    if is_match():
+      # IF THERE IS MATCH GET INFO ABOUT
+      m_id = 0
+      m_name = ''
+      m_city = ''
+      m_reason = ''
+      await state.update_data(match_id=m_id)
+      await state.update_data(match_name = m_name)
+      await state.update_data(match_city = m_city)
+      await state.update_data(match_reason = m_reason)
+      set_state_has_match(state=state)
+    # IF THERE IS NO MATCH REPEAT AFTER 10 MINUTES
+    else:
+      scheduler.add_job(schedule_jobs, data, datetime.datetime.now()+datetime.timedelta(minutes=10))
+
+
+async def on_startup():
+  schedule_jobs()
+
 if __name__ == '__main__':
+    scheduler.start()
     executor.start_polling(dp, skip_updates=True)
