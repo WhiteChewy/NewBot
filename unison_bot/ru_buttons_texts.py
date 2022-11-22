@@ -139,3 +139,5 @@ LIKE_MEETING = "Очень понравилось"
 NEUTRAL_MEETING = "Ничего особенного"
 
 DONT_LIKE_MEETING = "Не понравилось"
+
+MAIN_MENU = "Показать главное меню"
