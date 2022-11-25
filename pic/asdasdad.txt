@@ -1,0 +1,26 @@
+data_match = {
+  # PROFILE
+    'user_id': 5951187826,
+    'name': 'Ефим',
+    'city': 'Санкт-Петербург',
+    'gender': 'М',
+    'birthday': '07.08.1996',
+    'reason': 'Серьезные отношения',
+    'profile_photo' : './pic/Head.png',
+    'subscribtion': True,
+    'matching_pause' : False,
+    'reason_to_stop': '',
+    'was_meeting' : False,
+    'meeting_reaction' : '',
+    'why_meeting_bad' : '',
+    # Payments
+    'payment_url': '',
+    'is_waiting_payment': False,
+    # GENERAL INFO AND TAGS
+    'has_match': True,
+    'help': False,
+    'tag_first_time': True,
+    'tag_comunication_help': False,
+    #MATCH INFO
+    'match_id': 877505237,
+}

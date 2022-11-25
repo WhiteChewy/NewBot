@@ -1,0 +1,20 @@
+user_id= 877505237
+name= Никита
+city= Санкт-Петербург
+gender= М
+birthday= 07.08.1996
+reason= Серьезные отношения
+profile_photo= ./pic/profiles/877505237/main_profile_photo.jpg
+subscribtion True
+matching_pause False
+reason_to_stop= None
+was_meeting= False
+meeting_reaction= None
+why_meeting_bad= None
+payment_url= None
+is_waiting_payment= False
+has_match= True
+help= False
+first_time= True
+comunication_complain= False
+match_id= 5951187826

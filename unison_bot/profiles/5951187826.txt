@@ -1,0 +1,21 @@
+user_id= 5951187826
+name= Ефим
+city= Санкт-Петербург
+gender= М
+birthday= 14.06.1992
+reason= Серьезные отношения
+profile_photo= ./pic/Head.png
+subscribtion True
+matching_pause False
+reason_to_stop= None
+was_meeting= False
+
+meeting_reaction= None
+why_meeting_bad= None
+payment_url= None
+is_waiting_payment= False
+has_match= True
+help= False
+tag_first_time= True
+comunication_complain= False
+match_id= 877505237
