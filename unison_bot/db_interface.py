@@ -169,7 +169,7 @@ async def set_match_id_manualy(id: int, connection: asyncpg.connection.Connectio
     await connection.execute('UPDATE users SET match_id=$1 WHERE user_id=$2', match_id, id)
 
 async def main():
-    conn = await asyncpg.connect('postgresql://%s:%s@localhost/bot_tg' % (DB_USER, DB_PASSWORD))
+    conn = await asyncpg.connect('postgresql://admin:sasuke007192@localhost/bot_tg')
     await conn.execute('''
             CREATE TABLE IF NOT EXISTS users(
                 user_id bigint PRIMARY KEY,
@@ -262,6 +262,10 @@ async def main():
     #         True,
     #         False,
     #         877505237)
+    
+    # print(await is_matching(877505237, conn))
+    # print(await is_matching(5951187826, conn))
+
     await conn.close()
 
-asyncio.get_event_loop().run_until_complete(main())
+    asyncio.get_event_loop().run_until_complete(main())
