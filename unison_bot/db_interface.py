@@ -83,13 +83,57 @@ async def is_comunication_complain(id: int, connection: asyncpg.connection.Conne
     row = await connection.fetchrow('SELECT comunication_complain FROM users WHERE user_id=$1', id)
     return row['comunication_complain']
 
+async def get_1st_extra_photo(id: int, connection: asyncpg.connection.Connection) -> str:
+    row = await connection.fetchrow('SELECT first_extra_photo FROM users WHERE user_id=$1', id)
+    return row['first_extra_photo']
+
+async def get_2nd_extra_photo(id: int, connection: asyncpg.connection.Connection) -> str:
+    row = await connection.fetchrow('SELECT second_extra_photo FROM users WHERE user_id=$1', id)
+    return row['second_extra_photo']
+
+async def get_3rd_extra_photo(id: int, connection: asyncpg.connection.Connection) -> str:
+    row = await connection.fetchrow('SELECT third_extra_photo FROM users WHERE user_id=$1', id)
+    return row['third_extra_photo']
+
+async def is_moderated(id: int, connection: asyncpg.connection.Connection) -> bool:
+    row = await connection.fetchrow('SELECT is_moderated FROM users WHERE user_id=$1', id)
+    return row['is_moderated']
+
+async def is_first_time_moderated(id: int, connection: asyncpg.connection.Connection) -> bool:
+    row = await connection.fetchrow('SELECT is_first_time_moderated FROM users WHERE user_id=$1', id)
+    return row['is_first_time_moderated']
+
+async def is_photo_ok(id: int, connection: asyncpg.connection.Connection) -> bool:
+    row = await connection.fetchrow('SELECT is_photo_ok FROM users WHERE user_id=$1', id)
+    return row['is_photo_ok']
+
+async def is_info_ok(id: int, connection: asyncpg.connection.Connection) -> bool:
+    row = await connection.fetchrow('SELECT is_info_ok FROM users WHERE user_id=$1', id)
+    return row['is_info_ok']
+
+async def get_algorithm_steps(id: int, connection: asyncpg.connection.Connection):
+    row = await connection.fetchrow('SELECT algorithm_steps FROM users WHERE user_id=$1', id)
+    return row['algorithm_steps']
+
+async def get_likes(id: int, connection: asyncpg.connection.Connection):
+    row = await connection.fetchrow('SELECT likes FROM users WHERE user_id=$1', id)
+    return row['likes']
+
+async def get_super_likes(id: int, connection: asyncpg.connection.Connection):
+    row = await connection.fetchrow('SELECT super_likes FROM users WHERE user_id=$1', id)
+    return row['super_likes']
+
 #SET DATA (UPDATE table SET field)
-async def create_new_user(user_id: int, connection: asyncpg.connection.Connection, name='', 
-                        city='', gender='', birthday=datetime.date.today(), reason='',
+async def create_new_user(user_id: int, connection: asyncpg.connection.Connection, name='', city='',
+                        gender='', birthday=datetime.date.today(), reason='',
                         profile_photo='', subscribtion=False, matching_pause=False,
-                        reason_to_stop='', was_meeting=False, meeting_reaction='',
-                        why_meeting_bad='', payment_url='', is_waiting_payment=False,
-                        has_match=False, help=False, first_time=True, comunication_help=False, match_id=0):
+                        reason_to_stop='', was_meeting=False,meeting_reaction='',
+                        why_meeting_bad='', payment_url='',is_waiting_payment=False,
+                        has_match=False, help=False, first_time=True,
+                        comunication_help=False, match_id=0, first_extra_photo='',
+                        second_extra_photo='', third_extra_photo='', is_moderated=False,
+                        is_first_time_moderated=True, is_photo_ok=True, is_info_ok=True,
+                        algorithm_steps=30, likes=7, super_likes=5):
     # REGISTRATING NEW USER
     await connection.execute('''INSERT INTO users(user_id, name, city, \
         gender, birthday, reason,\
@@ -97,19 +141,29 @@ async def create_new_user(user_id: int, connection: asyncpg.connection.Connectio
         reason_to_stop, was_meeting, meeting_reaction, \
         why_meeting_bad, payment_url, is_waiting_payment, \
         has_match, help, first_time, \
-        comunication_complain, match_id) VALUES( $1, $2, $3,\
+        comunication_complain, match_id, first_extra_photo, \
+        second_extra_photo, third_extra_photo, is_moderated, \
+        is_first_time_moderated, is_photo_ok, is_info_ok,
+        algorithm_steps, likes, super_likes) VALUES( $1, $2, $3,\
             $4, $5, $6, \
             $7, $8, $9, \
             $10, $11, $12, \
             $13, $14, $15, \
             $16, $17, $18, \
-            $19, $20)''',
+            $19, $20, $21, \
+            $22, $23, $24, \
+            $25, $26, $27, \
+            $28, $29, $30)''',
             user_id, name, city,
             gender, birthday, reason,
             profile_photo, subscribtion, matching_pause,
             reason_to_stop, was_meeting, meeting_reaction,
             why_meeting_bad, payment_url, is_waiting_payment,
-            has_match, help, first_time, comunication_help, match_id)
+            has_match, help, first_time, 
+            comunication_help, match_id, first_extra_photo,
+            second_extra_photo, third_extra_photo, is_moderated,
+            is_first_time_moderated, is_photo_ok, is_info_ok,
+            algorithm_steps, likes, super_likes)
     
 async def set_name(id: int, connection: asyncpg.connection.Connection, name: str):
     await connection.execute('UPDATE users SET name=$1 WHERE user_id=$2', name, id)
@@ -168,14 +222,44 @@ async def set_comunication_complain_status(id: int, connection: asyncpg.connecti
 async def set_match_id_manualy(id: int, connection: asyncpg.connection.Connection, match_id: int):
     await connection.execute('UPDATE users SET match_id=$1 WHERE user_id=$2', match_id, id)
 
-async def main():
+async def set_1st_extra_photo(id: int, connection: asyncpg.connection.Connection, photo: str):
+    await connection.execute('UPDATE users SET first_extra_photo=$1 WHERE user_id=$2', photo, id)
+
+async def set_2nd_extra_photo(id: int, connection: asyncpg.connection.Connection, photo: str):
+    await connection.execute('UPDATE users SET second_extra_photo=$1 WHERE user_id=$2', photo, id)
+
+async def set_3rd_extra_photo(id: int, connection: asyncpg.connection.Connection, photo: str):
+    await connection.execute('UPDATE users SET third_extra_photo=$1 WHERE user_id=$2', photo, id)
+
+async def set_moderated_status(id: int, connection: asyncpg.connection.Connection, status: bool):
+    await connection.execute('UPDATE users SET is_moderated=$1 WHERE user_id=$2', status, id)
+
+async def set_first_time_moderated(id: int, connection: asyncpg.connection.Connection, status: bool):
+    await connection.execute('UPDATE users SET is_first_time_moderated=$1 WHERE user_id=$2', status, id)
+
+async def set_photo_status(id: int, connection: asyncpg.connection.Connection, status: bool):
+    await connection.execute('UPDATE users SET is_photo_ok=$1 WHERE user_id=$2', status, id)
+
+async def set_info_status(id: int, connection: asyncpg.connection.Connection, status: bool):
+    await connection.execute('UPDATE users SET is_info_ok=$1 WHERE user_id=$2', status, id)
+
+async def set_algorithm_steps(id: int, connection: asyncpg.connection.Connection, step: int):
+    await connection.execute('UPDATE users SET algorithm_steps=$1 WHERE user_id=$2', step, id)
+
+async def set_likes(id: int, connection: asyncpg.connection.Connection, step: int):
+    await connection.execute('UPDATE users SET likes=$1 WHERE user_id=$2', step, id)
+
+async def set_superlikes(id: int, connection: asyncpg.connection.Connection, step: int):
+    await connection.execute('UPDATE users SET super_likes=$1 WHERE user_id=$2', step, id)
+
+async def table_ini(conn: asyncpg.connection.Connection):
     conn = await asyncpg.connect('postgresql://admin:sasuke007192@localhost/bot_tg')
     await conn.execute('''
             CREATE TABLE IF NOT EXISTS users(
                 user_id bigint PRIMARY KEY,
                 name text,
                 city text,
-                gender char,
+                gender text,
                 birthday date,
                 reason text,
                 profile_photo text,
@@ -191,7 +275,17 @@ async def main():
                 help bool,
                 first_time bool,
                 comunication_complain bool,
-                match_id bigint
+                match_id bigint,
+                first_extra_photo text,
+                second_extra_photo text,
+                third_extra_photo text,
+                is_moderated bool,
+                is_first_time_moderated bool,
+                is_photo_ok bool,
+                is_info_ok bool,
+                algorithm_steps int,
+                likes int,
+                super_likes int
             )
     ''')
 
@@ -268,4 +362,4 @@ async def main():
 
     await conn.close()
 
-    asyncio.get_event_loop().run_until_complete(main())
+# asyncio.get_event_loop().run_until_complete(main())
