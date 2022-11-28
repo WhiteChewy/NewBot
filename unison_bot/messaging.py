@@ -221,25 +221,6 @@ async def schedule_jobs(id: int, state: FSMContext):
 
 @dp.message_handler(commands='start')
 async def messaging_start(message: types.Message,  state: FSMContext, query=types.CallbackQuery):
-    #data = await state.get_data()
-    
-    # if message.from_user.id == 877505237:
-    #   await state.update_data(user_id = 877505237)
-    #   await state.update_data(match_id= 891872881)
-    #   await state.update_data(match_photo= './pic/Head.png')
-    #   await state.update_data(match_city = 'Санкт-Петербург')
-    #   await state.update_data(match_name = 'Илья')
-    #   await state.update_data(match_reason = 'Серьезные отношения')
-    #   await state.update_data(match_wanna_meet = False)
-    # else:
-    #   data['user_id'] = 891872881
-    #   data['match_id']= 877505237
-    #   data['name'] = 'Илья'
-    #   data['match_photo']= './pic/profiles/877505237/main_profile_photo.jpg'
-    #   data['match_city'] = 'Санкт-Петербург'
-    #   data['match_name'] = 'Никита'
-    #   data['match_reason'] = 'Серьезные отношения'
-    #   data['match_wanna_meet'] = False
     global conn
     conn = await asyncpg.connect('postgresql://%s:%s@localhost/bot_tg' % (DB_USER, DB_PASSWORD))
     await state.reset_state(with_data=False)
@@ -268,7 +249,8 @@ async def start_nomatch(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=types.ContentTypes.TEXT, state=Form.no_match)
 async def message_reaction_if_text(message: types.Message, state: FSMContext):
   #data = await state.get_data()
-  if message.text == buttons_texts.MAIN_MENU and not db.is_matching(message.from_user.id, conn):
+  await state.reset_state()
+  if message.text == buttons_texts.MAIN_MENU and not await db.is_matching(message.from_user.id, conn):
     await state.reset_state(with_data=False)
     inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     if await db.is_subscribed(message.from_user.id, conn):
@@ -295,14 +277,15 @@ async def message_reaction_if_text(message: types.Message, state: FSMContext):
       await Form.no_match.set()
     else:
       await Form.has_match.set()
-  elif db.is_matching(message.from_user.id, conn):
+  elif await db.is_matching(message.from_user.id, conn):
     await bot.send_message(message.from_user.id, text=message.text)
 
-@dp.message_handler(commands='start_match', state=Form.has_match)
+
+@dp.message_handler(commands='start_match')
 async def set_has_macth(message: types.Message):
   await db.set_match_status(message.from_user.id, conn)
 
-@dp.callback_query_handler(text='main_menu', state=Form.no_match)
+@dp.callback_query_handler(text='main_menu')
 async def messaging_start(message: types.Message, state: FSMContext):
     await state.reset_state(with_data=False)
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
@@ -329,6 +312,25 @@ async def messaging_start(message: types.Message, state: FSMContext):
     
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #------------------------------CHECKING, GETTING AND CANCEL SUBSCRIBTION----------------------------------------------------------------------------------------------------------------------------
+@dp.callback_query_handler(text='have_subscribtion')
+async def abandon_subsribtion(message: types.Message, state: FSMContext):
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for some statistics--------------------------------
+    #requests.post(url='https://api.amplitude.com/2/httpapi', json={
+  #"api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  #"events": [
+  #  {
+  #    "user_id": message.from_user.id,
+  #    "event_type": "bot_menu_subscribe_btn"
+  #  }
+  #]
+#})
+    #--------------------------------------------------------------------------------------   
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    abandon_button = types.InlineKeyboardButton(text=buttons_texts.DENY, callback_data='deny_subscribtion')
+    back_button = types.InlineKeyboardButton(text=buttons_texts.BACK, callback_data='main_menu')
+    keyboard.add(abandon_button, back_button)
+    await bot.send_message(message.from_user.id, text=texts.WHAT_TO_DO, reply_markup=keyboard)
 @dp.callback_query_handler(text='have_subscribtion', state=Form.no_match)
 async def abandon_subsribtion(message: types.Message, state: FSMContext):
     #--------------------------------------------------------------------------------------
@@ -349,6 +351,33 @@ async def abandon_subsribtion(message: types.Message, state: FSMContext):
     keyboard.add(abandon_button, back_button)
     await bot.send_message(message.from_user.id, text=texts.WHAT_TO_DO, reply_markup=keyboard)
 
+@dp.callback_query_handler(text='doesnt_have_subscribtions')
+async def subscribe(message: types.Message, state: FSMContext):
+    #data = await state.get_data()
+    await state.reset_state(with_data=False)
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for some statistics--------------------------------
+#     requests.post(url='https://api.amplitude.com/2/httpapi', json={
+#   "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+#   "events": [
+#     {
+#       "user_id": message.from_user.id,
+#       "event_type": "bot_menu_subscribe_btn"
+#     }
+#   ]
+# })
+    #--------------------------------------------------------------------------------------   
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    if await db.is_subscribed(message.from_user.id, conn):
+        get_subscribe = types.InlineKeyboardButton(text=buttons_texts.GET_SUBSCRIBE, callback_data='u_have_subscription')
+    else:
+        get_subscribe = types.InlineKeyboardButton(text=buttons_texts.GET_SUBSCRIBE, callback_data='subscribe')
+    keyboard.add(get_subscribe)
+    if not db.is_matching(message.from_user.id, conn):
+      await Form.no_match.set()
+    else:
+      await Form.has_match.set()
+    await bot.send_message(message.from_user.id, text=texts.SUBSCRIBE_INFO, reply_markup=keyboard)   
 @dp.callback_query_handler(text='doesnt_have_subscribtions', state=Form.no_match)
 async def subscribe(message: types.Message, state: FSMContext):
     #data = await state.get_data()
@@ -376,8 +405,23 @@ async def subscribe(message: types.Message, state: FSMContext):
     else:
       await Form.has_match.set()
     await bot.send_message(message.from_user.id, text=texts.SUBSCRIBE_INFO, reply_markup=keyboard)
-    
 
+@dp.callback_query_handler(text='u_have_subscription')
+async def error_u_have_subscribtion(query: types.CallbackQuery, state: FSMContext):
+    # data = await state.get_data()
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for some statistics--------------------------------
+#     requests.post(url='https://api.amplitude.com/2/httpapi', json={
+#   "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+#   "events": [
+#     {
+#       "user_id": data['user_id'],
+#       "event_type": "bot_subscribe_btn"
+#     }
+#   ]
+# })
+    #--------------------------------------------------------------------------------------   
+    await query.message.edit_text(text=texts.SUBSCRIBE_ERROR_HAD)
 @dp.callback_query_handler(text='u_have_subscription', state=Form.no_match)
 async def error_u_have_subscribtion(query: types.CallbackQuery, state: FSMContext):
     # data = await state.get_data()
@@ -395,6 +439,39 @@ async def error_u_have_subscribtion(query: types.CallbackQuery, state: FSMContex
     #--------------------------------------------------------------------------------------   
     await query.message.edit_text(text=texts.SUBSCRIBE_ERROR_HAD)
 
+@dp.callback_query_handler(text='subscribe')
+async def pay_subscribe(message: types.Message, state: FSMContext):
+    #data = await state.get_date()
+    await state.reset_state(with_data=False)
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for getting payment url----------------------------
+#     request = requests.post(url='https://server.unison.dating/user/payment/request?user_id=%s' % data['user_id'], json={
+#      "amount": "870"
+#  })
+    #--------------------------------------------------------------------------------------   
+    #await state.update_data(payment_url=request.text['payment_url'])
+    await state.reset_state(with_data=False)
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    main_menu_button = types.InlineKeyboardButton(text=buttons_texts.BACK_TO_THE_MENU, callback_data='main_menu')
+  
+    keyboard.add(main_menu_button)
+    if not await db.is_matching(message.from_user.id, conn):
+      await Form.no_match.set()
+    else:
+      await Form.has_match.set()
+    #await bot.send_message(message.from_user.id, text=texts.PAY_URL % request.text['payment_url'], reply_markup=keyboard)
+    await bot.send_message(message.from_user.id, text=texts.PAY_URL % await db.get_payment_url(message.from_user.id), reply_markup=keyboard)
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for some statistics--------------------------------
+#     requests.post(url='https://api.amplitude.com/2/httpapi', json={
+#   "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+#   "events": [
+#     {
+#       "user_id": data['user_id'],
+#       "event_type": "bot_subscribe_pay_btn"
+#     }
+#   ]
+# })  
 @dp.callback_query_handler(text='subscribe', state=Form.no_match)
 async def pay_subscribe(message: types.Message, state: FSMContext):
     #data = await state.get_date()
@@ -428,8 +505,33 @@ async def pay_subscribe(message: types.Message, state: FSMContext):
 #     }
 #   ]
 # })
-    
 
+@dp.callback_query_handler(text='deny_subscribtion')
+async def abbandon_subscribe(message: types.Message, state: FSMContext):
+    #await state.update_data(subscribtion=False)
+    await db.set_subscribtion_status(message.from_user.id, conn, False)
+    with open('./pic/where_menu.png', 'rb') as file_img:
+      await bot.send_photo(message.from_user.id, photo=file_img)
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for some statistics--------------------------------
+#     requests.post(url='https://api.amplitude.com/2/httpapi', json={
+#   "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+#   "events": [
+#     {
+#       "user_id": data['user_id'],
+#       "event_type": "bot_subscribe_cancel"
+#     }
+#   ]
+# })
+    #--------------------------------------------------------------------------------------   
+    #----------------------POST request for some statistics--------------------------------
+    #req = requests.post(url='https://server.unison.dating/user/payment/cancel?user_id%s' % message.from_user.id, json={})
+    #-------------------------------------------------------------------------------------- 
+    if await db.is_matching(message.from_user.id, conn):
+      await Form.has_match.set()
+    else:
+      await Form.no_match.set()
+    await bot.send_message(message.from_user.id, text=texts.PAYMENT_CANCEL)
 @dp.callback_query_handler(text='deny_subscribtion', state=Form.no_match)
 async def abbandon_subscribe(message: types.Message, state: FSMContext):
     #await state.update_data(subscribtion=False)
@@ -456,8 +558,7 @@ async def abbandon_subscribe(message: types.Message, state: FSMContext):
     else:
       await Form.no_match.set()
     await bot.send_message(message.from_user.id, text=texts.PAYMENT_CANCEL)
-    
-  
+
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -588,7 +689,7 @@ async def game_one(message: types.Message, state: FSMContext):
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # ------------------------HELP SECTION--------------------------------------------------------------------------------------------------------------------------------------------------------------
-@dp.callback_query_handler(text='help', state=Form.no_match)
+@dp.callback_query_handler(text='help')
 async def get_help(message: types.Message, state: FSMContext):
   #state.update_data(help=True)
   #data['help']=True
@@ -637,7 +738,7 @@ async def help_message(message: types.Message, state: FSMContext):
 
 # **************************************************************************************************************************************************************************************************
 # ***********************TELEGRAM CONTACTS**********************************************************************************************************************************************************
-@dp.callback_query_handler(text='our_telegram', state=Form.no_match)
+@dp.callback_query_handler(text='our_telegram')
 async def send_telegram_url(message: types.Message, state: FSMContext):
   #data = await state.get_data()
   await state.reset_state(with_data=False)
@@ -671,6 +772,40 @@ async def request_when_tg_pressed(message: types.Message, state: FSMContext):
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # ----------------------PAUSE MATCHING--------------------------------------------------------------------------------------------------------------------------------------------------------------
+@dp.callback_query_handler(text='paused_main_menu')
+async def pause_menu(message: types.Message, state: FSMContext):
+  await state.reset_state(with_data=False)
+  await db.set_matching_pause_status(message.from_user.id, conn, True)
+  #-------------------------------------------------------------------------
+  #---------------------POST request for STATISTIC--------------------------
+#   requests.post(url='https://api.amplitude.com/2/httpapi',json={
+#   "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+#   "events": [
+#     {
+#       "user_id": data['user_id'],
+#       "event_type": "bot_menu_pause_btn"
+#     }
+#   ]
+# })
+  #-------------------------------------------------------------------------
+  #---------------------POST request to END finding match-------------------
+  #requests.post(url='https://server.unison.dating/user/pause?user_id=%s' % message.from_user.id, json={"pause": "true"})
+  #-------------------------------------------------------------------------
+  #-------------------------------------------------------------------------
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  if await db.is_subscribed(message.from_user.id, conn):
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscribtion')
+  else:
+      subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscribtions')
+  write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+  were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+  pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
+  keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
+  if not await db.is_matching(message.from_user.id, conn):
+    await Form.no_match.set()
+  else:
+    await Form.has_match.set()
+  await bot.send_message(message.from_user.id, text=texts.PAUSE_MAIN_MENU, reply_markup= keyboard)
 @dp.callback_query_handler(text='paused_main_menu', state=Form.no_match)
 async def pause_menu(message: types.Message, state: FSMContext):
   await state.reset_state(with_data=False)
@@ -705,7 +840,46 @@ async def pause_menu(message: types.Message, state: FSMContext):
   else:
     await Form.has_match.set()
   await bot.send_message(message.from_user.id, text=texts.PAUSE_MAIN_MENU, reply_markup= keyboard)
-  
+
+@dp.callback_query_handler(text='unpaused_main_menu')
+async def messaging_start(message: types.Message, state: FSMContext):
+    #data = await state.get_data()
+    await state.reset_state(with_data=False)
+    #await state.update_data(matching_pause=False)
+    await db.set_match_status(message.from_user.id, conn, False)
+    #-------------------------------------------------------------------------
+    #---------------------POST request for STATISTIC--------------------------
+#     requests.post(url='https://api.amplitude.com/2/httpapi', json={
+#   "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+#   "events": [
+#     {
+#       "user_id": message.from_user.id,
+#       "event_type": "bot_menu_resume_btn"
+#     }
+#   ]
+# })
+    #-------------------------------------------------------------------------
+    #---------------------POST request to UNPAUSE finding---------------------
+    # requests.post(url='https://server.unison.dating/user/pause?user_id=%s' % message.from_user.id, json={"pause": "false"})
+    #-------------------------------------------------------------------------
+    #-------------------------------------------------------------------------
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    if await db.is_subscribed(message.from_user.id, conn):
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscribtion')
+    else:
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscribtions')
+    write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+    were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+    pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
+    keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
+    #--------------------set all data about match person zero----------------
+    await db.set_match_id_manualy(message.from_user.id, conn, 0)
+    #------------------------------------------------------------------------
+    if not await db.is_matching(message.from_user.id, conn):
+      await Form.no_match.set()
+    else:
+      await Form.has_match.set()
+    await bot.send_message(message.from_user.id, text=texts.MAIN_MENU, reply_markup=keyboard)
 @dp.callback_query_handler(text='unpaused_main_menu', state=Form.no_match)
 async def messaging_start(message: types.Message, state: FSMContext):
     #data = await state.get_data()
@@ -746,13 +920,12 @@ async def messaging_start(message: types.Message, state: FSMContext):
       await Form.has_match.set()
     await bot.send_message(message.from_user.id, text=texts.MAIN_MENU, reply_markup=keyboard)
 
-
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # **************************************************************************************************************************************************************************************************
 # ************************************MATCHING MENU*************************************************************************************************************************************************
-@dp.message_handler(commands = 'start_has_match', state=Form.has_match)
+@dp.message_handler(commands = 'start_has_match')
 async def start_communicating(message: types.Message, state: FSMContext):
   await db.set_first_time_status(message.from_user.id, conn, True)
   await bot.send_message(message.from_user.id, text=texts.NEW_MATCH)
@@ -931,7 +1104,7 @@ async def spb_menu(query: types.CallbackQuery, state: FSMContext):
   await query.message.edit_reply_markup(reply_markup=keyboard)
 
 
-@dp.callback_query_handler(text='are_u_deny_meeting', state=Form.has_match)
+@dp.callback_query_handler(text='are_u_deny_meeting')
 async def are_u_deny_meeting(query: types.CallbackQuery, state: FSMContext):
   #data = await state.get_data()
   await state.reset_state(with_data=False)
@@ -1044,13 +1217,12 @@ async def deny_leavint(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(text='confirm_leaving')
 async def delete_match_info(message: types.Message, state: FSMContext):
-  await db.set_match_id_manualy(message.from_user.id, conn, 0)
-  await db.set_match_status(message.from_user.id, conn, False)
-  keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+  await state.reset_state()
+  keyboard1 = types.InlineKeyboardMarkup(resize_keyboard = True)
   confirm_leaving_button = types.InlineKeyboardButton(text=buttons_texts.YES, callback_data='confirm_leaving')
-  keyboard.add(confirm_leaving_button)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.USER_LEAVE_CAHT, reply_markup=keyboard)
-  await Form.no_match.set()
+  keyboard1.add(confirm_leaving_button)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.USER_LEAVE_CAHT, reply_markup=keyboard1)
+  # ACTIVATE ON CLIENT SIDE ---------------------------------------------------------------------------------------
   inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
   if await db.is_subscribed(message.from_user, conn):
       subscribes_button = types.KeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscribtion')
@@ -1068,14 +1240,30 @@ async def delete_match_info(message: types.Message, state: FSMContext):
   reply_keyboard.add(main_menu)
   with open('./pic/main_photo.png', 'rb') as img_file:
     await bot.send_photo(message.from_user.id, photo=img_file ,reply_markup=reply_keyboard)
-  if not await db.is_paused(message.from_user.id, conn):
-    await bot.send_message(message.from_user.id, text=texts.MAIN_MENU, reply_markup=inline_keyboard)
+  # ACTIVATE ON MATCH SIDE ----------------------------------------------------------------------------------------
+  inline_keyboard2 = types.InlineKeyboardMarkup(resize_keyboard=True)
+  if await db.is_subscribed(await db.get_match_id(message.from_user, conn), conn):
+      subscribes_button = types.KeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscribtion')
   else:
-    await bot.send_message(message.from_user.id, text=texts.PAUSE_MAIN_MENU, reply_markup=inline_keyboard)
-  if not await db.is_matching(message.from_user.id, conn):
-    await Form.no_match.set()
-  else:
-    await Form.has_match.set()
+      subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscribtions')
+  write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+  were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+  pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
+  inline_keyboard2.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
+  reply_keyboard2 = types.ReplyKeyboardMarkup(resize_keyboard=True)
+  main_menu = types.KeyboardButton(text=buttons_texts.MAIN_MENU)
+  reply_keyboard2.add(main_menu)
+  with open('./pic/main_photo.png', 'rb') as img_file:
+    await bot.send_photo(await db.get_match_id(message.from_user, conn), photo=img_file ,reply_markup=reply_keyboard2)
+  # --------------------------------------------------------------------------------------------------------------
+  await bot.send_message(message.from_user.id, text=texts.MAIN_MENU, reply_markup=inline_keyboard)
+  await bot.send_message(await db.get_match_id(message.from_user, conn), text=texts.MAIN_MENU, reply_markup=inline_keyboard2)
+  
+  await db.set_match_id_manualy(await db.get_match_id(message.from_user.id, conn), conn, 0)
+  await db.set_match_id_manualy(message.from_user.id, conn, 0)
+  
+  await db.set_match_status(message.from_user.id, conn, False)
+  await db.set_match_status(await db.get_match_id(message.from_user, conn), conn, False)
 
 @dp.message_handler(text='ignore')
 async def show_ignore(message: types.Message, state: FSMContext):
