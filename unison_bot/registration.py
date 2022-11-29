@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import os
 import aioschedule
 import logging
@@ -201,7 +200,7 @@ async def set_state_has_match(id: int, state: FSMContext):
   
   #--------------------------------------------------------------------------------------
   await Form.has_match.set()
-  with open('./pic/find_match.png', 'rb') as img:
+  with open('/pic/find_match.png', 'rb') as img:
     await bot.send_photo(id, photo=img)
   keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
   wanna_meet_button = types.KeyboardButton(text=buttons_texts.WANNA_MEET) #, callback_data='wanna_meet')
@@ -259,7 +258,7 @@ async def schedule_jobs(id: int, state: FSMContext):
       else:
         pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
       keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
-      with open('./pic/main_photo.png', 'rb') as img_file:
+      with open('pic/main_photo.png', 'rb') as img_file:
         await bot.send_photo(id, photo=img_file)
       if not await db.is_matching(id, conn):
         await Form.no_match.set()
@@ -291,7 +290,7 @@ async def start(message: types.Message, state: FSMContext):
   await show_starting_menu(message)
 
 async def show_starting_menu(message: types.Message):
-    photo = open('./pic/start.jpg', 'rb')
+    photo = open('pic/start.jpg', 'rb')
     starting_inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     about_project_button = types.InlineKeyboardButton(buttons_texts.INFO_ABOUT_PROJECT, callback_data='back')
@@ -450,7 +449,7 @@ async def registration_begin(message: types.Message, state: FSMContext):
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     reg_button = types.InlineKeyboardButton(buttons_texts.BEGIN_BUTTON, callback_data='begin_registration')
     keyboard.add(reg_button)
-    photo = open('./pic/letsgo.jpg', 'rb')
+    photo = open('pic/letsgo.jpg', 'rb')
     await bot.send_photo(message.from_user.id, photo)
     await bot.send_message(message.from_user.id, text= texts.LETS_GO, reply_markup=keyboard)
 
@@ -969,12 +968,12 @@ async def ad_photo(query: types.CallbackQuery):
 # DOWNLOADING MAIN PHOTO OF PROFILE. BECOURSE WE NEED TO FORWARD IT TO MODERATION CHAT
 @dp.message_handler(state=Form.profile_photo, content_types=types.ContentTypes.PHOTO)
 async def download_photo(message: types.Message, state: FSMContext):
-    await message.photo[-1].download(destination_file='./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id)) # DOWNLOADIN MAIN PHOTO 
-    with open(r'./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
+    await message.photo[-1].download(destination_file='pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id)) # DOWNLOADIN MAIN PHOTO 
+    with open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
       base64_img = base64.b64encode(img.read())
       await state.update_data(profile_photo = base64_img)
     await db.set_profile_photo(message.from_user.id, conn, base64_img.decode('utf-8'))
-    os.remove(r'./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id))
     await state.reset_state(with_data=False)
     #------------------------------------------------------------------------------
     #-------------------------POST request for some STATISTIC----------------------
@@ -994,10 +993,10 @@ async def download_photo(message: types.Message, state: FSMContext):
     confirm_button = types.InlineKeyboardButton(buttons_texts.YES, callback_data='confirm_photo')
     again_button = types.InlineKeyboardButton(buttons_texts.NO, callback_data='upload_main_photo')
     keyboard.row(confirm_button, again_button)
-    # img = open(r'./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'wb')
+    # img = open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'wb')
     # img.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
     # img.close()
-    # with open(r'./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
+    # with open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
     #   await bot.send_photo(message.from_user.id, img)
     await bot.send_message(message.from_user.id, text=texts.CONFIRMING_PHOTO, reply_markup=keyboard)
 
@@ -1042,30 +1041,30 @@ async def show_base_profile(message: types.CallbackQuery):
     reg_button = types.InlineKeyboardButton(buttons_texts.RESTART_REGISTRATION, callback_data='begin')
     keyboard.row(reg_button, next_button)
     
-    img = open(r'./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'wb')
+    img = open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'wb')
     img.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
     img.close()
 
-    with open(r'./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
+    with open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
       await bot.send_photo(message.from_user.id, photo=img, caption=text, reply_markup=keyboard)
 
 
 # We need 3 photos from different sides of your face. UPLOADING FIRST and GIVING INFO about PHOTOS that service needs
 @dp.callback_query_handler(text='upload_extra_photo')
 async def upload_three_photo(message: types.Message):
-    photo = open('./pic/3photos.png', 'rb')
+    photo = open('pic/3photos.png', 'rb')
     await bot.send_photo(message.from_user.id, photo)
     await bot.send_message(message.from_user.id, text=texts.EXTRA_PHOTOS)
     await Form.first_side_photo.set()
 # IF ANSWER OF USER IS PHOTO and STATE first_side_photo is ACTIVE = UPLOAD 1st PHOTO TO SERVER and FINISH THE first side photo STATE IN STATE MACHINE and ACTIVATE second_side_photo STATE
 @dp.message_handler(state=Form.first_side_photo, content_types=types.ContentTypes.PHOTO)
 async def upload_first_photo(message: types.Message, state: FSMContext):
-    await message.photo[-1].download(destination_file='./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
-    with open(r'./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id), 'rb') as img:
+    await message.photo[-1].download(destination_file='pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
+    with open(r'pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id), 'rb') as img:
       base64_img = base64.b64encode(img.read())
       await state.update_data(first_extra_photo = base64_img)
     await db.set_1st_extra_photo(message.from_user.id, conn, base64_img.decode('utf-8'))
-    os.remove(r'./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
     #------------------------------------------------------------------------------
     #-------------------------POST request for some STATISTIC----------------------
     async with aiohttp.ClientSession() as session:
@@ -1086,12 +1085,12 @@ async def upload_first_photo(message: types.Message, state: FSMContext):
 # IF ANSWER OF USER IS PHOTO and STATE second_side_photo is ACTIVE = UPLOAD 2nd PHOTO TO SERVER and FINISH THE STATE IN STATE MACHINE
 @dp.message_handler(state=Form.second_side_photo, content_types=types.ContentTypes.PHOTO)
 async def upload_second_photo(message: types.Message, state: FSMContext):
-    await message.photo[-1].download(destination_file='./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
-    with open(r'./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id), 'rb') as img:
+    await message.photo[-1].download(destination_file='pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
+    with open(r'pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id), 'rb') as img:
       base64_img = base64.b64encode(img.read())
       await state.update_data(second_extra_photo = base64_img)
     await db.set_2nd_extra_photo(message.from_user.id, conn, base64_img.decode('utf-8'))
-    os.remove(r'./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
     #------------------------------------------------------------------------------
     #-------------------------POST request for some STATISTIC----------------------
     async with aiohttp.ClientSession() as session:
@@ -1112,12 +1111,12 @@ async def upload_second_photo(message: types.Message, state: FSMContext):
 # IF ANSWER OF USER IS PHOTO and STATE third_side_photo is ACTIVE = UPLOAD 3rd PHOTO TO SERVER and FINISH THE STATE IN STATE MACHINE
 @dp.message_handler(state=Form.third_side_photo, content_types=types.ContentTypes.PHOTO)
 async def upload_third_photo(message: types.Message, state: FSMContext):
-    await message.photo[-1].download(destination_file='./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
-    with open(r'./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id), 'rb') as img:
+    await message.photo[-1].download(destination_file='pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
+    with open(r'pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id), 'rb') as img:
       base64_img = base64.b64encode(img.read())
       await state.update_data(third_extra_photo = base64_img)
     await db.set_1st_extra_photo(message.from_user.id, conn, base64_img.decode('utf-8'))
-    os.remove(r'./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
     #------------------------------------------------------------------------------
     #-------------------------POST request for some STATISTIC----------------------
     async with aiohttp.ClientSession() as session:
@@ -1176,11 +1175,11 @@ async def upload_third_photo(message: types.Message, state: FSMContext):
 }) as resp: print(await resp.text())
     #-------------------------------------------------------------------------------
     #------   POST request to send profile main photo   ----------------------------
-    img = open(r'./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'wb')
+    img = open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'wb')
     img.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
     img.close()
 
-    with open(r'./pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
+    with open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
       async with aiohttp.ClientSession() as session:
         async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendPhoto', json={
 "chat_id":"-1001693622168",
@@ -1189,20 +1188,20 @@ async def upload_third_photo(message: types.Message, state: FSMContext):
 }) as resp: print(await resp.text())
     #-------------------------------------------------------------------------------
     #---------------------    POST request to send additional photos    ------------
-    img1 = open(r'./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id), 'wb')
+    img1 = open(r'pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id), 'wb')
     img1.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
     img1.close()
-    img1 = open(r'./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id), 'rb')
+    img1 = open(r'pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id), 'rb')
     
-    img2 = open(r'./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id), 'wb')
+    img2 = open(r'pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id), 'wb')
     img2.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
     img2.close()
-    img2 = open(r'./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id), 'rb')
+    img2 = open(r'pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id), 'rb')
 
-    img3 = open(r'./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id), 'wb')
+    img3 = open(r'pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id), 'wb')
     img3.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
     img3.close()
-    img3 = open(r'./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id), 'rb')
+    img3 = open(r'pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id), 'rb')
 
     async with aiohttp.ClientSession() as session:
       async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendMediaGroup', json={
@@ -1223,9 +1222,9 @@ async def upload_third_photo(message: types.Message, state: FSMContext):
     }
   ]
 }) as resp: print(await resp.text())
-    os.remove(r'./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
-    os.remove(r'./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
-    os.remove(r'./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
   
 
 # CONFIRMING EXTRA PHOTOS BEFORE UPLOADING
@@ -1235,30 +1234,30 @@ async def show_extra_photos(message: types.Message):
     b64_second_photo = await db.get_2nd_extra_photo(message.from_user.id, conn)
     b64_third_photo = await db.get_3rd_extra_photo(message.from_user.id, conn)
     #1
-    img = open(r'./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id), 'wb')
+    img = open(r'pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id), 'wb')
     img.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
     img.close()
     #2
-    img = open(r'./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id), 'wb')
+    img = open(r'pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id), 'wb')
     img.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
     img.close()
     #3
-    img = open(r'./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id), 'wb')
+    img = open(r'pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id), 'wb')
     img.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
     img.close()
     mediagroup = types.MediaGroup()
-    mediagroup.attach_photo(types.InputFile('./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id)))
-    mediagroup.attach_photo(types.InputFile('./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id)))
-    mediagroup.attach_photo(types.InputFile('./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id)))
+    mediagroup.attach_photo(types.InputFile('pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id)))
+    mediagroup.attach_photo(types.InputFile('pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id)))
+    mediagroup.attach_photo(types.InputFile('pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id)))
     inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     restart_button = types.InlineKeyboardButton(buttons_texts.NO, callback_data='download_photo_again')
     next_button = types.InlineKeyboardButton(buttons_texts.YES, callback_data='start_alogrithm_educating')
     inline_keyboard.row(next_button, restart_button)
     await bot.send_media_group(message.from_user.id, media=mediagroup)
     await bot.send_message(message.from_user.id, text=texts.CONFIRMING_SIDE_PHOTOS, reply_markup=inline_keyboard)
-    os.remove(r'./pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
-    os.remove(r'./pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
-    os.remove(r'./pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/third_extra_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/second_extra_photo.jpg' % (message.from_user.id))
+    os.remove(r'pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id))
 
 # UPLOADING PHOTOS TO SERVER
 @dp.callback_query_handler(text='start_alogrithm_educating')
@@ -1328,16 +1327,17 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
     await query.answer(text=buttons_texts.ANSWER_STUDY % (31-await db.get_algorithm_steps(query.from_user.id, conn), await db.get_likes(query.from_user.id, conn), await db.get_super_likes(query.from_user.id, conn)), show_alert=True)
     #------------------------------------------------------------------------------------------------------------------------------------------------------
     #--------------------------------------------------POST request to GET PHOTO and MAKING DATASET--------------------------------------------------------
-    async with aiohttp.ClientSession() as session:
-      async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-  "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
-}) as resp: print(await resp.text())
+#     async with aiohttp.ClientSession() as session:
+#       async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
+#   "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
+# }) as resp: print(await resp.text())
     #------------------------------------------------------------------------------------------------------------------------------------------------------
     #------------------------------------------------------------------------------------------------------------------------------------------------------
     request = json.loads(await resp.text())
     await query.message.delete()
-    await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
-    await state.reset_state(with_data=False)
+    #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
+    with open('pic/testing_thirty/%s.jpg'%30-await db.get_algorithm_steps(query.from_user.id, conn), 'rb') as img:
+      await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
 
 @dp.callback_query_handler(text='unlike_educate_algorithm')
 async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
@@ -1387,17 +1387,18 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
         inline_keyboard.row(likes_button, super_like_button)
         inline_keyboard.add(unlike_button)
     await query.answer(text=buttons_texts.ANSWER_STUDY % (31-await db.get_algorithm_steps(query.from_user.id, conn), await db.get_likes(query.from_user.id, conn), await db.get_super_likes(query.from_user.id, conn)), show_alert=True)
-    async with aiohttp.ClientSession() as session:
-      async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-  "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
-  "answer": {
-    30-await db.get_algorithm_steps(query.from_user.id, conn): "0"
-  }
-}) as resp: print(await resp.text())
+#     async with aiohttp.ClientSession() as session:
+#       async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
+#   "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
+#   "answer": {
+#     30-await db.get_algorithm_steps(query.from_user.id, conn): "0"
+#   }
+# }) as resp: print(await resp.text())
     request = json.loads(await resp.text())
     await query.message.delete()
-    await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
-    await state.reset_state(with_data=False)
+    #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
+    with open('pic/testing_thirty/%s.jpg'%30-await db.get_algorithm_steps(query.from_user.id, conn), 'rb') as img:
+      await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
 
 @dp.callback_query_handler(text='like_educate_algorithm')
 async def second_algorithm_education(query: types.CallbackQuery, state: FSMContext):
@@ -1449,18 +1450,20 @@ async def second_algorithm_education(query: types.CallbackQuery, state: FSMConte
     await query.answer(text=buttons_texts.ANSWER_STUDY % (31-await db.get_algorithm_steps(query.from_user.id, conn), await db.get_likes(query.from_user.id, conn)-1, await db.get_super_likes(query.from_user.id, conn)), show_alert=True)
     #------------------------------------------------------------------------------------------------------------------------------------------------------
     #--------------------------------------------------POST request to GET PHOTO and MAKING DATASET--------------------------------------------------------
-    async with aiohttp.ClientSession() as session:
-      async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-  "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
-  "answer": {
-    30-await db.get_algorithm_steps(query.from_user.id, conn): "1"
-  }
-}) as resp: print(await resp.text())
+#     async with aiohttp.ClientSession() as session:
+#       async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
+#   "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
+#   "answer": {
+#     30-await db.get_algorithm_steps(query.from_user.id, conn): "1"
+#   }
+# }) as resp: print(await resp.text())
     #------------------------------------------------------------------------------------------------------------------------------------------------------
     #------------------------------------------------------------------------------------------------------------------------------------------------------
     request = json.loads(await resp.text())
     await query.message.delete()
-    await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
+    #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
+    with open('pic/testing_thirty/%s.jpg'%30-await db.get_algorithm_steps(query.from_user.id, conn), 'rb') as img:
+      await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
 
 @dp.callback_query_handler(text='superlike_educate_algorithm')
 async def third_algorithm_education(query: types.CallbackQuery, state: FSMContext):
@@ -1515,19 +1518,20 @@ async def third_algorithm_education(query: types.CallbackQuery, state: FSMContex
     await query.answer(text=buttons_texts.ANSWER_STUDY % (31-await db.get_algorithm_steps(query.from_user.id, conn), await db.get_likes(query.from_user.id, conn), await db.get_super_likes(query.from_user.id, conn)-1), show_alert=True)
     #------------------------------------------------------------------------------------------------------------------------------------------------------
     #--------------------------------------------------POST request to GET PHOTO and MAKING DATASET--------------------------------------------------------
-    async with aiohttp.ClientSession() as session:
-      async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-  "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
-  "answer": {
-    30-await db.get_algorithm_steps(query.from_user.id, conn): "2"
-  }
-}) as resp: print(await resp.text())
+#     async with aiohttp.ClientSession() as session:
+#       async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
+#   "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
+#   "answer": {
+#     30-await db.get_algorithm_steps(query.from_user.id, conn): "2"
+#   }
+# }) as resp: print(await resp.text())
     #------------------------------------------------------------------------------------------------------------------------------------------------------
     #------------------------------------------------------------------------------------------------------------------------------------------------------
     request = json.loads(await resp.text())
     await query.message.delete()
-    await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
-
+    #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
+    with open('pic/testing_thirty/%s.jpg'%30-await db.get_algorithm_steps(query.from_user.id, conn), 'rb') as img:
+      await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
 
 @dp.callback_query_handler(text='final')
 async def registration_final(message: types.Message, state: FSMContext):

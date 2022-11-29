@@ -155,6 +155,5 @@ cython_debug/
 config.py
 
 # TEST PHOTOS FROM DOWNLOAD DIRECTORY
-/pic/profiles/*
-/pic/testing_thirty/*
+/profiles/*
 test.py

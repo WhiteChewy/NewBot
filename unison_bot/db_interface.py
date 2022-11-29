@@ -153,7 +153,7 @@ async def create_new_user(user_id: int, connection: asyncpg.connection.Connectio
             $19, $20, $21, \
             $22, $23, $24, \
             $25, $26, $27, \
-            $28, $29, $30)''',
+            $28, $29, $30) ON CONFLICT (user_id) DO NOTHING;''',
             user_id, name, city,
             gender, birthday, reason,
             profile_photo, subscribtion, matching_pause,
@@ -253,7 +253,7 @@ async def set_superlikes(id: int, connection: asyncpg.connection.Connection, ste
     await connection.execute('UPDATE users SET super_likes=$1 WHERE user_id=$2', step, id)
 
 async def table_ini(conn: asyncpg.connection.Connection):
-    conn = await asyncpg.connect('postgresql://admin:sasuke007192@localhost/bot_tg')
+    #conn = await asyncpg.connect('postgresql://admin:sasuke007192@localhost/bot_tg')
     await conn.execute('''
             CREATE TABLE IF NOT EXISTS users(
                 user_id bigint PRIMARY KEY,
@@ -360,6 +360,6 @@ async def table_ini(conn: asyncpg.connection.Connection):
     # print(await is_matching(877505237, conn))
     # print(await is_matching(5951187826, conn))
 
-    await conn.close()
+    #await conn.close()
 
 # asyncio.get_event_loop().run_until_complete(main())
