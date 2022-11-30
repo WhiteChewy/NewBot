@@ -19,6 +19,7 @@ import comunication as com
 import asyncpg
 import aiohttp
 
+from pathlib import Path
 from aiogram.dispatcher.filters import Filter
 from User import User
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -27,10 +28,10 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from config import TOKEN, DB_PASSWORD, DB_USER
+from config import TOKEN, DB_PASSWORD, DB_USER, TESTING_TOKEN
 
 #logging.basicConfig(level=logging.INFO)
-bot = Bot(token=TOKEN)
+bot = Bot(token=TESTING_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 scheduler = AsyncIOScheduler()
 conn = None
@@ -92,6 +93,82 @@ class Form(StatesGroup):
     payment_ends = State()  # подписка закончилась
     payment_fail = State()  # отказ от оплаты
 
+# **************************************************************************************************************************************************************************************************
+# ********************************GAME SECTION******************************************************************************************************************************************************
+@dp.callback_query_handler(state = Form.game1)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_ONE)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_ONE)
+
+@dp.callback_query_handler(state = Form.game2)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_TWO)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_TWO)
+  
+@dp.callback_query_handler(state = Form.game3)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_THREE)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_THREE)
+  
+@dp.callback_query_handler(state = Form.game4)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_FOUR)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_FOUR)
+  
+@dp.callback_query_handler(state = Form.game5)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_FIVE)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_FIVE)
+  
+@dp.callback_query_handler(state = Form.game6)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_SIX)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_SIX)
+  
+@dp.callback_query_handler(state = Form.game7)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_SIX)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_SIX)
+  
+@dp.callback_query_handler(state = Form.game8)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_EIGHT)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_EIGHT)
+  
+@dp.callback_query_handler(state = Form.game9)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_NINE)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_NINE)
+  
+@dp.callback_query_handler(state = Form.game10)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_TEN)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_TEN)
+  
+@dp.callback_query_handler(state = Form.game11)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_ELEVEN)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_ELEVEN)
+  
+@dp.callback_query_handler(state=Form.game12)
+async def game_one(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  await bot.send_message(message.from_user.id, text=texts.GAME_TWELVE)
+  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_TWELVE)
+  
+# **************************************************************************************************************************************************************************************************
+# **************************************************************************************************************************************************************************************************
 
 # =====================================================================================================================================================================================================
 # |                                     SCHEDULER FUNCTIONS                                                                                                                                           |
@@ -131,7 +208,7 @@ async def is_match(id: int):
 
 async def is_premium(id: int):
   r'''
-  Get information if user has subscribtion, or not. Return True - if yes, FALSE - if no
+  Get information if user has subscription, or not. Return True - if yes, FALSE - if no
   '''
   return await db.is_subscribed(id, conn)
 
@@ -177,8 +254,8 @@ async def set_state_unmatch(id: int, state: FSMContext):
 async def set_state_one_day_to_unmatch(id: int, state: FSMContext):
   r'''Function to warn user that he has only one day left to comunicate with his match'''
   await state.reset_state(with_data=False)
-  #scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.date.today()+datetime.timedelta(days=1), args=(state,))
-  scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=1), args=(id, state,))
+  scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.date.today()+datetime.timedelta(days=1), args=(state,))
+  #scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=1), args=(id, state,))
   await Form.has_match.set()
   await bot.send_message(id, text=texts.ONE_DAY_TO_UNMATCH % await db.get_name(await db.get_match_id(id, conn), conn))
 
@@ -200,7 +277,7 @@ async def set_state_has_match(id: int, state: FSMContext):
   
   #--------------------------------------------------------------------------------------
   await Form.has_match.set()
-  with open('/pic/find_match.png', 'rb') as img:
+  with open(Path('pic/find_match.png'), 'rb') as img:
     await bot.send_photo(id, photo=img)
   keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
   wanna_meet_button = types.KeyboardButton(text=buttons_texts.WANNA_MEET) #, callback_data='wanna_meet')
@@ -223,8 +300,6 @@ async def schedule_jobs(id: int, state: FSMContext):
     # IF TODAY IS MONDAY
     if await is_monday():
       if await is_match(id):
-        # IF THERE IS MATCH GET INFO ABOUT
-
         scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=datetime.date.today()+datetime.timedelta(days=6), args=(id, state, ))
       else:
         scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state,))
@@ -234,7 +309,24 @@ async def schedule_jobs(id: int, state: FSMContext):
       days_till_monday = 7 - datetime.date.today().weekday()
       new_date = datetime.date.today() + datetime.timedelta(days=days_till_monday)
       run_date = datetime.datetime.combine(new_date, datetime.time(hour=9, minute=0))
-      scheduler.add_job(schedule_jobs, 'date', run_date=run_date, args=(id, state,)) # add job to scheduler
+      #scheduler.add_job(schedule_jobs, 'date', run_date=run_date, args=(id, state,)) # add job to scheduler
+      await state.reset_state(with_data=False)
+      keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+      if await db.is_subscribed(id, conn):
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscription')
+      else:
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscriptions')
+      write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+      were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+      if not await db.is_paused(id, conn): 
+        pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
+      else:
+        pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
+      keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
+      if not await db.is_paused(id, conn):
+        await bot.send_message(id, text=texts.MAIN_MENU, reply_markup=keyboard)
+      else:
+        await bot.send_message(id, text=texts.PAUSE_MAIN_MENU, reply_markup=keyboard)
   # IF USER SUBSCRIBED
   else:
     if await is_match(id):
@@ -283,6 +375,7 @@ async def start(message: types.Message, state: FSMContext):
   '''
   global conn
   conn = await asyncpg.connect('postgresql://%s:%s@localhost/bot_tg' % (DB_USER, DB_PASSWORD))
+  print(os.path.dirname(__file__))
   await db.table_ini(conn)
   await db.create_new_user(message.from_user.id, conn)
   await state.reset_state()
@@ -383,11 +476,15 @@ async def show_back(query: types.CallbackQuery):
     about_button = types.InlineKeyboardButton(buttons_texts.ABOUT_PROJECT, callback_data='about')
     uniqueness_button = types.InlineKeyboardButton(buttons_texts.UNIQ, callback_data='uniqueness')
     imprinting_button = types.InlineKeyboardButton(buttons_texts.ABOUT_IMPRINTING, callback_data='imprint')
-    start_inline_keyboard.row(about_button, uniqueness_button, imprinting_button)
+    start_inline_keyboard.add(about_button)
+    start_inline_keyboard.add(uniqueness_button)
+    start_inline_keyboard.add(imprinting_button)
     user_agreement_button = types.InlineKeyboardButton(buttons_texts.USER_AGREEMENT, callback_data='user_agreement_1')
     faq_button = types.InlineKeyboardButton(buttons_texts.FAQ, callback_data='faq')
     registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
-    start_inline_keyboard.row(user_agreement_button, faq_button, registration_button)
+    start_inline_keyboard.add(user_agreement_button)
+    start_inline_keyboard.add(faq_button)
+    start_inline_keyboard.add(registration_button)
     await query.message.edit_text(text=texts.ABOUT_MENU, reply_markup=start_inline_keyboard)
 
 # MESSAGE ABOUT CONCEPT
@@ -497,7 +594,9 @@ async def set_profile_name(message: types.Message, state: FSMContext):
     male_button = types.InlineKeyboardButton(buttons_texts.GENDER_MALE[0], callback_data='male')
     female_button = types.InlineKeyboardButton(buttons_texts.GENDER_FEMALE[0], callback_data='female')
     under_construction_button = types.InlineKeyboardButton(buttons_texts.OTHER_GENDER, callback_data='other_gender')
-    keyboard.add(male_button, female_button, under_construction_button)
+    keyboard.add(male_button)
+    keyboard.add(female_button)
+    keyboard.add(under_construction_button)
     await bot.send_message(message.from_user.id, text=texts.GENDER_CHOOSE, reply_markup=keyboard)
 
 # SET profile GENDER to MALE and ACTIVATE BIRTHDAY STATE
@@ -1156,36 +1255,36 @@ async def upload_third_photo(message: types.Message, state: FSMContext):
     
     #-------------------------------------------------------------------------------
     #--------------    POST request to send profile to moderation    ---------------
-    if not await db.is_moderated(message.from_user.id, conn) or not await db.is_photo_ok(message.from_user.id, conn) or not await db.is_info_ok(message.from_user.id, conn):
-      async with aiohttp.ClientSession() as session:
-        async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendMessage', json={
-  "chat_id": "-1001693622168",
-  "text": "Пользователь требует ПОВТОРНОЙ модерации: \n UserID: %s; \n Имя: %s; \n Пол: %s; \n День рождения: %s; \n Город: %s; \n Цель знакомства: %s; " % 
-                                                      (message.from_user.id, await db.get_name(message.from_user.id, conn), await db.get_gender(message.from_user.id, conn),
-                                                      await db.get_birthday(message.from_user.id, conn), await db.get_city(message.from_user.id, conn), await db.get_reason(message.from_user.id, conn))
-}) as resp: print(await resp.text())
-    else:
-      async with aiohttp.ClientSession() as session:
-        async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendMessage', json={
-"chat_id":"-1001693622168",
-"text": "Новый пользователь требует модерации: \n UserID: %s; \n Имя: %s; \n Пол: %s; \n День рождения: %s; \n Город: %s; \n Цель знакомства: %s; " % 
-                                                (message.from_user.id, await db.get_name(message.from_user.id), await db.get_gender(message.from_user.id, conn),
-                                                await db.get_birthday(message.from_user.id, conn), await db.get_city(message.from_user.id, conn), await db.get_reason(message.from_user.id, conn))
+#     if not await db.is_moderated(message.from_user.id, conn) or not await db.is_photo_ok(message.from_user.id, conn) or not await db.is_info_ok(message.from_user.id, conn):
+#       async with aiohttp.ClientSession() as session:
+#         async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendMessage', json={
+#   "chat_id": "-1001693622168",
+#   "text": "Пользователь требует ПОВТОРНОЙ модерации: \n UserID: %s; \n Имя: %s; \n Пол: %s; \n День рождения: %s; \n Город: %s; \n Цель знакомства: %s; " % 
+#                                                       (message.from_user.id, await db.get_name(message.from_user.id, conn), await db.get_gender(message.from_user.id, conn),
+#                                                       await db.get_birthday(message.from_user.id, conn), await db.get_city(message.from_user.id, conn), await db.get_reason(message.from_user.id, conn))
+# }) as resp: print(await resp.text())
+#     else:
+#       async with aiohttp.ClientSession() as session:
+#         async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendMessage', json={
+# "chat_id":"-1001693622168",
+# "text": "Новый пользователь требует модерации: \n UserID: %s; \n Имя: %s; \n Пол: %s; \n День рождения: %s; \n Город: %s; \n Цель знакомства: %s; " % 
+#                                                 (message.from_user.id, await db.get_name(message.from_user.id), await db.get_gender(message.from_user.id, conn),
+#                                                 await db.get_birthday(message.from_user.id, conn), await db.get_city(message.from_user.id, conn), await db.get_reason(message.from_user.id, conn))
 
-}) as resp: print(await resp.text())
+# }) as resp: print(await resp.text())
     #-------------------------------------------------------------------------------
     #------   POST request to send profile main photo   ----------------------------
-    img = open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'wb')
-    img.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
-    img.close()
+#     img = open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'wb')
+#     img.write(base64.decodebytes(bytes(await db.get_profile_photo(message.from_user.id, conn), encoding='utf-8')))
+#     img.close()
 
-    with open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
-      async with aiohttp.ClientSession() as session:
-        async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendPhoto', json={
-"chat_id":"-1001693622168",
-"photo": img,
-"caption":"Фото профиля"
-}) as resp: print(await resp.text())
+#     with open(r'pic/profiles/%s/main_profile_photo.jpg' % (message.from_user.id), 'rb') as img:
+#       async with aiohttp.ClientSession() as session:
+#         async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendPhoto', json={
+# "chat_id":"-1001693622168",
+# "photo": img,
+# "caption":"Фото профиля"
+# }) as resp: print(await resp.text())
     #-------------------------------------------------------------------------------
     #---------------------    POST request to send additional photos    ------------
     img1 = open(r'pic/profiles/%s/first_extra_photo.jpg' % (message.from_user.id), 'wb')
@@ -1336,7 +1435,7 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
     request = json.loads(await resp.text())
     await query.message.delete()
     #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
-    with open('pic/testing_thirty/%s.jpg'%30-await db.get_algorithm_steps(query.from_user.id, conn), 'rb') as img:
+    with open('pic/testing_thirty/%s.jpg'% (30 - await db.get_algorithm_steps(query.from_user.id, conn), conn), 'rb') as img:
       await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
 
 @dp.callback_query_handler(text='unlike_educate_algorithm')
@@ -1397,7 +1496,7 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
     request = json.loads(await resp.text())
     await query.message.delete()
     #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
-    with open('pic/testing_thirty/%s.jpg'%30-await db.get_algorithm_steps(query.from_user.id, conn), 'rb') as img:
+    with open('pic/testing_thirty/%s.jpg'%(30-await db.get_algorithm_steps(query.from_user.id, conn)), 'rb') as img:
       await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
 
 @dp.callback_query_handler(text='like_educate_algorithm')
@@ -1462,7 +1561,7 @@ async def second_algorithm_education(query: types.CallbackQuery, state: FSMConte
     request = json.loads(await resp.text())
     await query.message.delete()
     #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
-    with open('pic/testing_thirty/%s.jpg'%30-await db.get_algorithm_steps(query.from_user.id, conn), 'rb') as img:
+    with open('pic/testing_thirty/%s.jpg'%(30-await db.get_algorithm_steps(query.from_user.id, conn)), 'rb') as img:
       await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
 
 @dp.callback_query_handler(text='superlike_educate_algorithm')
@@ -1530,13 +1629,341 @@ async def third_algorithm_education(query: types.CallbackQuery, state: FSMContex
     request = json.loads(await resp.text())
     await query.message.delete()
     #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
-    with open('pic/testing_thirty/%s.jpg'%30-await db.get_algorithm_steps(query.from_user.id, conn), 'rb') as img:
+    with open('pic/testing_thirty/%s.jpg'%(30-await db.get_algorithm_steps(query.from_user.id, conn)), 'rb') as img:
       await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
 
 @dp.callback_query_handler(text='final')
 async def registration_final(message: types.Message, state: FSMContext):
     await bot.send_message(message.chat.id, text=texts.FINAL_MESSAGE)
-    pass
+    await schedule_jobs(message.from_user.id, state=state)
+
+@dp.message_handler(commands='start_no_match')
+async def registration_final(message: types.Message, state: FSMContext):
+    global conn
+    conn = await asyncpg.connect('postgresql://%s:%s@localhost/bot_tg' % (DB_USER, DB_PASSWORD))
+    await bot.send_message(message.chat.id, text=texts.FINAL_MESSAGE)
+    await schedule_jobs(message.from_user.id, state=state)
+    scheduler.start()
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#|                               WAITING FOR MATCH                                                                                                                                                  |
+#L__________________________________________________________________________________________________________________________________________________________________________________________________l
+# IF sheduler set state no_match as active 
+@dp.message_handler(state=Form.no_match)
+async def messaging_start(message: types.Message, state: FSMContext):
+    await state.reset_state(with_data=False)
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    if await db.is_subscribed(message.from_user.id, conn):
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscription')
+    else:
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscriptions')
+    write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+    were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+    if not await db.is_paused(message.from_user.id, conn): 
+      pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
+    else:
+      pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
+    keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
+    if not await db.is_matching(message.from_user.id, conn):
+      await Form.no_match.set()
+    else:
+      await Form.has_match.set()
+    if not await db.is_paused(message.from_user.id, conn):
+      await bot.send_message(message.from_user.id, text=texts.MAIN_MENU, reply_markup=keyboard)
+    else:
+      await bot.send_message(message.from_user.id, text=texts.PAUSE_MAIN_MENU, reply_markup=keyboard)
+
+@dp.message_handler(content_types=types.ContentTypes.TEXT, state=Form.no_match)
+async def message_reaction_if_text(message: types.Message, state: FSMContext):
+  await state.reset_state()
+  if message.text == buttons_texts.MAIN_MENU and not await db.is_matching(message.from_user.id, conn):
+    await state.reset_state(with_data=False)
+    inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    if await db.is_subscribed(message.from_user.id, conn):
+        subscribes_button = types.KeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscribtion')
+    else:
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscribtions')
+    write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+    were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+    if not await db.is_paused(message.from_user.id, conn):
+      pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
+    else:
+      pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
+    inline_keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
+    reply_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    main_menu = types.KeyboardButton(text=buttons_texts.MAIN_MENU)
+    reply_keyboard.add(main_menu)
+    with open('./pic/main_photo.png', 'rb') as img_file:
+      await bot.send_photo(message.from_user.id, photo=img_file ,reply_markup=reply_keyboard)
+    if not await db.is_paused(message.from_user.id, conn):
+      await bot.send_message(message.from_user.id, text=texts.MAIN_MENU, reply_markup=inline_keyboard)
+    else:
+      pass
+  elif await db.is_matching(message.from_user.id, conn):
+    await bot.send_message(message.from_user.id, text=message.text)
+
+@dp.callback_query_handler(text='main_menu')
+async def messaging_start(query: types.CallbackQuery, state: FSMContext):
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    if await db.is_subscribed(query.from_user.id, conn):
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscription')
+    else:
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscriptions')
+    write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+    were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+    if not await db.is_paused(query.from_user.id, conn): 
+      pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
+    else:
+      pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
+    keyboard.add(subscribes_button)
+    keyboard.add(write_help)
+    keyboard.add(were_in_telegram_button)
+    keyboard.add(pause_button)
+    if not await db.is_paused(query.from_user.id, conn):
+      await query.message.edit_text(text=texts.MAIN_MENU)
+      await query.message.edit_reply_markup(reply_markup=keyboard)
+    else:
+      await query.message.edit_text(text=texts.PAUSE_MAIN_MENU)
+      await query.message.edit_reply_markup(reply_markup=keyboard)
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+# |                       checking, getting and cancel subscription                                                                                                          |
+# L__________________________________________________________________________________________________________________________________________________________________________l   
+# If user have subscription let him to unsubscribe
+@dp.callback_query_handler(text='have_subscription')
+async def abandon_subsribtion(query: types.CallbackQuery):
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for some statistics--------------------------------
+    # async with aiohttp.ClientSession() as session:
+    #   async with session.post(url='https://api.amplitude.com/2/httpapi', json={
+    #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+    #     "events": [
+    #     {
+    #     "user_id": query.from_user.id,
+    #     "event_type": "bot_menu_subscribe_btn"
+    #     }
+    #     ]
+    #   }) as resp: pass
+    #--------------------------------------------------------------------------------------
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    abandon_button = types.InlineKeyboardButton(text=buttons_texts.DENY, callback_data='deny_subscribtion')
+    back_button = types.InlineKeyboardButton(text=buttons_texts.BACK, callback_data='main_menu')
+    keyboard.add(abandon_button, back_button)
+    await query.message.edit_text(text=texts.WHAT_TO_DO)
+    await query.message.edit_reply_markup(reply_markup=keyboard)
+# If user doesnt have subscription ascks him if he want subscription
+@dp.callback_query_handler(text='doesnt_have_subscriptions')
+async def subscribe(query: types.CallbackQuery):
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for some statistics--------------------------------
+    async with aiohttp.ClientSession() as session:
+      async with session.post(url='https://api.amplitude.com/2/httpapi', json={
+      "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+      "events": [
+        {
+          "user_id": query.from_user.id,
+          "event_type": "bot_menu_subscribe_btn"
+        }
+      ]
+      }) as resp: pass
+    #--------------------------------------------------------------------------------------   
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    get_subscribe = types.InlineKeyboardButton(text=buttons_texts.GET_SUBSCRIBE, callback_data='subscribe')
+    back_button = types.InlineKeyboardButton(text=buttons_texts.BACK, callback_data='main_menu')
+    keyboard.row(back_button, get_subscribe)
+    await query.message.edit_text(text=texts.SUBSCRIBE_INFO)
+    await query.message.edit_reply_markup(reply_markup=keyboard)
+# Get subscription
+@dp.callback_query_handler(text='subscribe')
+async def pay_subscribe(query: types.CallbackQuery):
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for getting payment url----------------------------
+    # async with aiohttp.ClientSession() as session:
+    #   async with session.post(url='https://server.unison.dating/user/payment/request?user_id=%s' % query.from_user.id, json={
+    #     "amount": "870"
+    #   }) as resp:
+    #     payment = json.loads(await resp.text())
+    #     await db.set_payment_url(query.from_user.id, conn, payment['url'])
+    #--------------------------------------------------------------------------------------   
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    main_menu_button = types.InlineKeyboardButton(text=buttons_texts.BACK_TO_THE_MENU, callback_data='main_menu')
+    keyboard.add(main_menu_button)
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for some statistics--------------------------------
+    # async with aiohttp.ClientSession() as session:
+    #   async with session.post(url='https://api.amplitude.com/2/httpapi', json={
+    #   "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+    #   "events": [
+    #       {
+    #         "user_id": query.from_user.id,
+    #         "event_type": "bot_subscribe_pay_btn"
+    #       }
+    #     ]
+    #   }) as resp: pass
+    #______________________________________________________________________________________
+    await query.message.edit_text(texts.PAY_URL % await db.get_payment_url(query.from_user.id, conn))
+    await query.message.edit_reply_markup(reply_markup=keyboard) 
+
+@dp.callback_query_handler(text='deny_subscribtion')
+async def abbandon_subscribe(query: types.CallbackQuery):
+    await db.set_subscribtion_status(query.from_user.id, conn, False)
+    #--------------------------------------------------------------------------------------
+    #----------------------POST request for some statistics--------------------------------
+    # async with aiohttp.ClientSession() as session:
+    #   async with session.post(url='https://api.amplitude.com/2/httpapi', json={
+    #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+    #     "events": [
+    #       {
+    #       "user_id": query.from_user.id,
+    #       "event_type": "bot_subscribe_cancel"
+    #       }
+    #     ]
+    #   }) as resp: pass
+    #--------------------------------------------------------------------------------------   
+    #----------------------POST request for some statistics--------------------------------
+    # async with aiohttp.ClientSession() as session:
+    #   async with session.post(url='https://server.unison.dating/user/payment/cancel?user_id%s' % query.from_user.id, json={}) as resp: pass
+    #-------------------------------------------------------------------------------------- 
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    back_button = types.InlineKeyboardButton(text=buttons_texts.BACK_TO_THE_MENU, callback_data='main_menu')
+    keyboard.add(back_button)
+    await query.message.edit_text(text=texts.PAYMENT_CANCEL)
+    await query.message.edit_reply_markup(reply_markup=keyboard)
+
+# ===========================================================================================================================================================================+
+# |                        HELP USER                                                                                                                                         |
+# L__________________________________________________________________________________________________________________________________________________________________________l
+@dp.callback_query_handler(text='help')
+async def get_help(query: types.CallbackQuery, state: FSMContext):
+  await db.set_help_status(query.from_user.id, conn, True)
+  await state.reset_state(with_data=False)
+  #-------------------------------------------------------------------------
+  #----------------------POST request for some STATISTICS-------------------
+  # async with aiohttp.ClientSession() as session:
+  #   async with session.post(url='https://api.amplitude.com/2/httpapi', json={
+  #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  #     "events": [
+  #       {
+  #        "user_id": query.from_user.id,
+  #         "event_type": "bot_menu_support_btn"
+  #       }
+  #     ]
+  #   }) as resp: pass
+  await query.message.edit_text(text=texts.GET_HELP)
+  await Form.help.set()
+@dp.message_handler(state=Form.help, content_types=types.ContentTypes.TEXT)
+async def help_message(message: types.Message, state: FSMContext):
+  await state.reset_state(with_data=False)
+  # ------------------------------------------------------------------------
+  # -----------------   FORWARDING HELP   ----------------------------------
+  async with aiohttp.ClientSession() as session:
+    async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendMessage', json={
+      "chat_id": "-776565232",
+      "text": texts.HELP_MESSAGE % (message.from_user.id, 
+                                    await db.get_name(message.from_user.id, conn), 
+                                    message.text, 
+                                    '[Profile ](tg://user?id=%s)' % message.from_user.id)
+    }) as resp: pass
+  # ________________________________________________________________________
+  await db.set_help_status(message.from_user.id, conn, False)
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
+  back = types.InlineKeyboardButton(text=buttons_texts.BACK_TO_THE_MENU, callback_data='main_menu')
+  keyboard.add(back)
+  await bot.send_message(message.from_user.id, text=texts.AFTER_HELP, reply_markup=keyboard)
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+# |                         TELEGRAM NEWS URL                                                                                                                                |
+# L__________________________________________________________________________________________________________________________________________________________________________l
+@dp.callback_query_handler(text='our_telegram')
+async def send_telegram_url(message: types.Message, state: FSMContext):
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  subscribe_button = types.InlineKeyboardButton(text=buttons_texts.SUBSCRIBE, url='https://t.me/UnisonDating', callback_data='user_pressed_tg')
+  back_button = types.InlineKeyboardButton(text=buttons_texts.BACK_TO_THE_MENU, callback_data='main_menu')
+  keyboard.add(subscribe_button)
+  keyboard.add(back_button)
+  await bot.send_message(message.from_user.id, text=texts.OUR_TG, reply_markup=keyboard)
+@dp.callback_query_handler(text='user_pressed_tg')
+async def request_when_tg_pressed(message: types.Message):
+  #-------------------------------------------------------------------------
+  #-------------POST request for some STATISTICS-----------------------------
+  # async with aiohttp.ClientSession() as session:
+  #   async with session.post(url='https://api.amplitude.com/2/httpapi', json={
+  #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  #     "events": [
+  #       {
+  #         "user_id": message.from_user.id,
+  #         "event_type": "bot_our_telegram_subscribe_btn"
+  #       }
+  #     ]
+  #   }) as resp: pass
+  pass
+
+# +=========================================================================================================================================================================+
+# |                         PAUSE FINDING MATCH                                                                                                                             |
+# L_________________________________________________________________________________________________________________________________________________________________________l
+# Main menu when user pause finding his match
+@dp.callback_query_handler(text='paused_main_menu')
+async def pause_menu(query: types.CallbackQuery, state: FSMContext):
+  await state.reset_state(with_data=False)
+  await db.set_matching_pause_status(query.from_user.id, conn, True)
+  #-------------------------------------------------------------------------
+  #---------------------POST request for STATISTIC--------------------------
+  # async with aiohttp.ClientSession() as session:
+  #   async with session.post(url='https://api.amplitude.com/2/httpapi',json={
+  #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+  #     "events": [
+  #       {
+  #         "user_id": query.from_user.id,
+  #         "event_type": "bot_menu_pause_btn"
+  #       }
+  #     ]
+  #   }) as resp: pass
+  #---------------------POST request to END finding match-------------------
+  # async with aiohttp.ClientSession() as session:
+  #   async with session.post(url='https://server.unison.dating/user/pause?user_id=%s' % query.from_user.id, json={"pause": "true"}) as resp: pass
+  #-------------------------------------------------------------------------
+  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+  if await db.is_subscribed(query.from_user.id, conn):
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscribtion')
+  else:
+      subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscribtions')
+  write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+  were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+  pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
+  keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
+  await query.message.edit_text(texts.PAUSE_MAIN_MENU)
+  await query.message.edit_reply_markup(reply_markup= keyboard)
+# Main menu when user in proces of finding his match
+@dp.callback_query_handler(text='unpaused_main_menu')
+async def messaging_start(query: types.CallbackQuery, state: FSMContext):
+    await db.set_matching_pause_status(query.from_user.id, conn, False)
+    #-------------------------------------------------------------------------
+    #---------------------POST request for STATISTIC--------------------------
+    # async with aiohttp.ClientSession() as session:
+    #   async with session.post(url='https://api.amplitude.com/2/httpapi', json={
+    #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+    #     "events": [
+    #       {
+    #         "user_id": query.from_user.id,
+    #         "event_type": "bot_menu_resume_btn"
+    #       }
+    #     ]     
+    #   }) as resp: pass
+    #------------------   POST request to UNPAUSE finding   ------------------
+    # async with aiohttp.ClientSession() as session:
+    #   async with session.post(url='https://server.unison.dating/user/pause?user_id=%s' % query.from_user.id, json={"pause": "false"}) as resp: pass
+    #-------------------------------------------------------------------------
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    if await db.is_subscribed(query.from_user.id, conn):
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscribtion')
+    else:
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscribtions')
+    write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+    were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+    pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
+    keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
+    await query.message.edit_text(texts.MAIN_MENU)
+    await query.message.edit_reply_markup(reply_markup=keyboard)
+
 
 
 if __name__ == "__main__":
