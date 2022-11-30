@@ -113,7 +113,7 @@ async def is_info_ok(id: int, connection: asyncpg.connection.Connection) -> bool
 
 async def get_algorithm_steps(id: int, connection: asyncpg.connection.Connection):
     row = await connection.fetchrow('SELECT algorithm_steps FROM users WHERE user_id=$1', id)
-    return row['algorithm_steps']
+    return int(row['algorithm_steps'])
 
 async def get_likes(id: int, connection: asyncpg.connection.Connection):
     row = await connection.fetchrow('SELECT likes FROM users WHERE user_id=$1', id)
