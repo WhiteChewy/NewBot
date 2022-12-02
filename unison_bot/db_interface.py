@@ -111,17 +111,33 @@ async def is_info_ok(id: int, connection: asyncpg.connection.Connection) -> bool
     row = await connection.fetchrow('SELECT is_info_ok FROM users WHERE user_id=$1', id)
     return row['is_info_ok']
 
-async def get_algorithm_steps(id: int, connection: asyncpg.connection.Connection):
+async def get_algorithm_steps(id: int, connection: asyncpg.connection.Connection) -> int:
     row = await connection.fetchrow('SELECT algorithm_steps FROM users WHERE user_id=$1', id)
     return int(row['algorithm_steps'])
 
-async def get_likes(id: int, connection: asyncpg.connection.Connection):
+async def get_likes(id: int, connection: asyncpg.connection.Connection) -> int:
     row = await connection.fetchrow('SELECT likes FROM users WHERE user_id=$1', id)
     return row['likes']
 
-async def get_super_likes(id: int, connection: asyncpg.connection.Connection):
+async def get_super_likes(id: int, connection: asyncpg.connection.Connection) -> int:
     row = await connection.fetchrow('SELECT super_likes FROM users WHERE user_id=$1', id)
     return row['super_likes']
+
+async def get_b64_profile_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
+    row = await connection.fetchrow('SELECT b64_profile FROM users WHERE user_id=$1', id)
+    return bytes(row['b64_profile'])
+
+async def get_b64_1st_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
+    row = await connection.fetchrow('SELECT b64_1st FROM users WHERE user_id=$1', id)
+    return bytes(row['b64_1st'])
+
+async def get_b64_2nd_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
+    row = await connection.fetchrow('SELECT b64_2nd FROM users WHERE user_id=$1', id)
+    return bytes(row['b64_2nd'])
+
+async def get_b64_1st_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
+    row = await connection.fetchrow('SELECT b64_rd FROM users WHERE user_id=$1', id)
+    return bytes(row['b64_3rd'])
 
 #SET DATA (UPDATE table SET field)
 async def create_new_user(user_id: int, connection: asyncpg.connection.Connection, name='', city='',
@@ -133,27 +149,33 @@ async def create_new_user(user_id: int, connection: asyncpg.connection.Connectio
                         comunication_help=False, match_id=0, first_extra_photo='',
                         second_extra_photo='', third_extra_photo='', is_moderated=False,
                         is_first_time_moderated=True, is_photo_ok=True, is_info_ok=True,
-                        algorithm_steps=30, likes=7, super_likes=5):
+                        algorithm_steps=30, likes=7, super_likes=5,
+                        b64_profile='', b64_1st='', b64_2nd='',
+                        b64_3rd=''):
     # REGISTRATING NEW USER
-    await connection.execute('''INSERT INTO users(user_id, name, city, \
-        gender, birthday, reason,\
-        profile_photo, subscribtion, matching_pause, \
-        reason_to_stop, was_meeting, meeting_reaction, \
-        why_meeting_bad, payment_url, is_waiting_payment, \
-        has_match, help, first_time, \
-        comunication_complain, match_id, first_extra_photo, \
-        second_extra_photo, third_extra_photo, is_moderated, \
+    await connection.execute('''INSERT INTO users(user_id, name, city,
+        gender, birthday, reason,
+        profile_photo, subscribtion, matching_pause,
+        reason_to_stop, was_meeting, meeting_reaction,
+        why_meeting_bad, payment_url, is_waiting_payment,
+        has_match, help, first_time,
+        comunication_complain, match_id, first_extra_photo,
+        second_extra_photo, third_extra_photo, is_moderated,
         is_first_time_moderated, is_photo_ok, is_info_ok,
-        algorithm_steps, likes, super_likes) VALUES( $1, $2, $3,\
-            $4, $5, $6, \
-            $7, $8, $9, \
-            $10, $11, $12, \
-            $13, $14, $15, \
-            $16, $17, $18, \
-            $19, $20, $21, \
-            $22, $23, $24, \
-            $25, $26, $27, \
-            $28, $29, $30) ON CONFLICT (user_id) DO NOTHING;''',
+        algorithm_steps, likes, super_likes,
+        b64_profile, b64_1st, b64_2nd,
+        b64_3rd) VALUES( $1, $2, $3,
+            $4, $5, $6,
+            $7, $8, $9,
+            $10, $11, $12,
+            $13, $14, $15,
+            $16, $17, $18,
+            $19, $20, $21,
+            $22, $23, $24,
+            $25, $26, $27,
+            $28, $29, $30,
+            $31, $32, $33,
+            $34) ON CONFLICT (user_id) DO NOTHING;''',
             user_id, name, city,
             gender, birthday, reason,
             profile_photo, subscribtion, matching_pause,
@@ -163,7 +185,9 @@ async def create_new_user(user_id: int, connection: asyncpg.connection.Connectio
             comunication_help, match_id, first_extra_photo,
             second_extra_photo, third_extra_photo, is_moderated,
             is_first_time_moderated, is_photo_ok, is_info_ok,
-            algorithm_steps, likes, super_likes)
+            algorithm_steps, likes, super_likes,
+            b64_profile, b64_1st, b64_2nd,
+            b64_3rd)
     
 async def set_name(id: int, connection: asyncpg.connection.Connection, name: str):
     await connection.execute('UPDATE users SET name=$1 WHERE user_id=$2', name, id)
@@ -252,6 +276,18 @@ async def set_likes(id: int, connection: asyncpg.connection.Connection, step: in
 async def set_superlikes(id: int, connection: asyncpg.connection.Connection, step: int):
     await connection.execute('UPDATE users SET super_likes=$1 WHERE user_id=$2', step, id)
 
+async def set_b64_profile_photo(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
+    await connection.execute('UPDATE users SET b64_profile=$1 WHERE user_id=$2', str(b64_string), id)
+
+async def set_b64_1st_photo(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
+    await connection.execute('UPDATE users SET b64_1st=$1 WHERE user_id=$2', str(b64_string), id)
+
+async def set_b64_2nd_photo(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
+    await connection.execute('UPDATE users SET b64_2nd=$1 WHERE user_id=$2', str(b64_string), id)
+
+async def set_b64_3rd_photo(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
+    await connection.execute('UPDATE users SET b64_3rd=$1 WHERE user_id=$2', str(b64_string), id)
+
 async def table_ini(conn: asyncpg.connection.Connection):
     #conn = await asyncpg.connect('postgresql://admin:sasuke007192@localhost/bot_tg')
     await conn.execute('''
@@ -285,7 +321,11 @@ async def table_ini(conn: asyncpg.connection.Connection):
                 is_info_ok bool,
                 algorithm_steps int,
                 likes int,
-                super_likes int
+                super_likes int,
+                b64_profile text,
+                b64_1st text,
+                b64_2nd text,
+                b64_3rd text
             )
     ''')
 
