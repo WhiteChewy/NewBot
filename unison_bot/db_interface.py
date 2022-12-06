@@ -289,7 +289,7 @@ async def set_b64_3rd_photo(id: int, connection: asyncpg.connection.Connection, 
     await connection.execute('UPDATE users SET b64_3rd=$1 WHERE user_id=$2', str(b64_string), id)
 
 async def table_ini(conn: asyncpg.connection.Connection):
-    #conn = await asyncpg.connect('postgresql://admin:sasuke007192@localhost/bot_tg')
+    conn = await asyncpg.connect('postgresql://admin:sasuke007192@localhost/bot_tg')
     await conn.execute('''
             CREATE TABLE IF NOT EXISTS users(
                 user_id bigint PRIMARY KEY,
@@ -329,77 +329,77 @@ async def table_ini(conn: asyncpg.connection.Connection):
             )
     ''')
 
-    # await conn.execute('''INSERT INTO users(user_id, name, city, \
-    #     gender, birthday, reason,\
-    #     profile_photo, subscribtion, matching_pause, \
-    #     reason_to_stop, was_meeting, meeting_reaction, \
-    #     why_meeting_bad, payment_url, is_waiting_payment, \
-    #     has_match, help, first_time, \
-    #     comunication_complain, match_id) VALUES( $1, $2, $3,\
-    #         $4, $5, $6, \
-    #         $7, $8, $9, \
-    #         $10, $11, $12, \
-    #         $13, $14, $15, \
-    #         $16, $17, $18, \
-    #         $19, $20)''', 
-    #     877505237,
-    #     'Никита',
-    #     'Санкт-Петербург',
-    #     'М',
-    #     datetime.date(1996, 8, 7),
-    #     'Серьезные отношения',
-    #     './pic/profiles/877505237/main_profile_photo.jpg',
-    #     True,
-    #     False,
-    #     'null',
-    #     False,
-    #     'null',
-    #     'null',
-    #     'null',
-    #     False,
-    #     True,
-    #     False,
-    #     True,
-    #     False,
-    #     5951187826)
+#     await conn.execute('''INSERT INTO users(user_id, name, city, \
+#         gender, birthday, reason,\
+#         profile_photo, subscribtion, matching_pause, \
+#         reason_to_stop, was_meeting, meeting_reaction, \
+#         why_meeting_bad, payment_url, is_waiting_payment, \
+#         has_match, help, first_time, \
+#         comunication_complain, match_id) VALUES( $1, $2, $3,\
+#             $4, $5, $6, \
+#             $7, $8, $9, \
+#             $10, $11, $12, \
+#             $13, $14, $15, \
+#             $16, $17, $18, \
+#             $19, $20)''', 
+#         877505237,
+#         'Никита',
+#         'Санкт-Петербург',
+#         'М',
+#         datetime.date(1996, 8, 7),
+#         'Серьезные отношения',
+#         './pic/profiles/877505237/main_profile_photo.jpg',
+#         True,
+#         False,
+#         'null',
+#         False,
+#         'null',
+#         'null',
+#         'null',
+#         False,
+#         True,
+#         False,
+#         True,
+#         False,
+#         5951187826)
 
-    # await conn.execute('''INSERT INTO users(user_id, name, city, \
-    #     gender, birthday, reason,\
-    #     profile_photo, subscribtion, matching_pause, \
-    #     reason_to_stop, was_meeting, meeting_reaction, \
-    #     why_meeting_bad, payment_url, is_waiting_payment, \
-    #     has_match, help, first_time, \
-    #     comunication_complain, match_id) VALUES( $1, $2, $3,\
-    #         $4, $5, $6, \
-    #         $7, $8, $9, \
-    #         $10, $11, $12, \
-    #         $13, $14, $15, \
-    #         $16, $17, $18, \
-    #         $19, $20)''',
-    #         5951187826,
-    #         'Ефим',
-    #         'Санкт-Петербург',
-    #         'М',
-    #         datetime.date(1992, 6, 14),
-    #         'Серьезные отношения',
-    #         './pic/Head.png',
-    #         True,
-    #         False,
-    #         'null',
-    #         False,
-    #         'null',
-    #         'null',
-    #         'null',
-    #         False,
-    #         True,
-    #         False,
-    #         True,
-    #         False,
-    #         877505237)
+#     await conn.execute('''INSERT INTO users(user_id, name, city, \
+#         gender, birthday, reason,\
+#         profile_photo, subscribtion, matching_pause, \
+#         reason_to_stop, was_meeting, meeting_reaction, \
+#         why_meeting_bad, payment_url, is_waiting_payment, \
+#         has_match, help, first_time, \
+#         comunication_complain, match_id) VALUES( $1, $2, $3,\
+#             $4, $5, $6, \
+#             $7, $8, $9, \
+#             $10, $11, $12, \
+#             $13, $14, $15, \
+#             $16, $17, $18, \
+#             $19, $20)''',
+#             5951187826,
+#             'Ефим',
+#             'Санкт-Петербург',
+#             'М',
+#             datetime.date(1992, 6, 14),
+#             'Серьезные отношения',
+#             './pic/Head.png',
+#             True,
+#             False,
+#             'null',
+#             False,
+#             'null',
+#             'null',
+#             'null',
+#             False,
+#             True,
+#             False,
+#             True,
+#             False,
+#             877505237)
     
-    # print(await is_matching(877505237, conn))
-    # print(await is_matching(5951187826, conn))
+#     print(await is_matching(877505237, conn))
+#     print(await is_matching(5951187826, conn))
 
-    #await conn.close()
+#     await conn.close()
 
-# asyncio.get_event_loop().run_until_complete(main())
+# asyncio.get_event_loop().run_until_complete(table_ini())
