@@ -14,6 +14,7 @@ import random
 import db_interface as db
 import asyncpg
 import aiohttp
+import re
 
 from starting_menu import *
 from pathlib import Path
@@ -88,6 +89,10 @@ class Form(StatesGroup):
     payment_ok = State()    # оплата успешна
     payment_ends = State()  # подписка закончилась
     payment_fail = State()  # отказ от оплаты
+
+    extra_photo_1 = State()
+    extra_photo_2 = State()
+    extra_photo_3 = State()
 
 # **************************************************************************************************************************************************************************************************
 # ********************************GAME SECTION******************************************************************************************************************************************************
@@ -255,8 +260,8 @@ async def set_state_unmatch(id: int, state: FSMContext, unmatch_menu=True):
 async def set_state_one_day_to_unmatch(id: int, state: FSMContext):
   r'''Function to warn user that he has only one day left to comunicate with his match'''
   await state.reset_state()
-  #scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.date.today()+datetime.timedelta(days=1), args=(id, state, False, ))
-  scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=1), args=(id, state,))
+  scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.date.today()+datetime.timedelta(days=1), args=(id, state, False, ))
+  #scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=1), args=(id, state,))
   await Form.has_match.set()
   await bot.send_message(id, text=texts.ONE_DAY_TO_UNMATCH % await db.get_name(await db.get_match_id(id, conn), conn))
 
@@ -292,7 +297,7 @@ async def set_state_has_match(id: int, state: FSMContext):
     await get_advice(id, state)
     await Form.has_match.set()
 
-async def schedule_jobs(id: int, state: FSMContext, show_menu=True):
+async def schedule_jobs(id: int, state: FSMContext, edit = False, query = None, show_menu=True):
   r'''
   Time scheduler to unmatch and warn users by timer. Using AsyncIOScheduler
   '''
@@ -302,51 +307,67 @@ async def schedule_jobs(id: int, state: FSMContext, show_menu=True):
     if await is_monday():
       # IF THERE IS MATCH FOR USER
       if await is_match(id):
-        # SHEDULE WARNING ABOUT ENDING TIME
-        #new_date = datetime.datetime.combine(datetime.date.today()+datetime.timedelta(days=10), datetime.time(hour=9, minute=0))
-        new_date = datetime.datetime.now() + datetime.timedelta(minutes=2)
-        scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=new_date, args=(id, state, ), id='unmatch_%s' % id)
-        # SHOW HAS MATCH STATUS
-        await set_state_has_match(id, state)
+          # SHEDULE WARNING ABOUT ENDING TIME
+          if not await db.is_paused(id, conn):
+              new_date = datetime.datetime.combine(datetime.date.today()+datetime.timedelta(days=6), datetime.time(hour=9, minute=0))
+              #new_date = datetime.datetime.now() + datetime.timedelta(minutes=2)
+              scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=new_date, args=(id, state, ), id='unmatch_%s' % id)
+              # SHOW HAS MATCH STATUS
+              await set_state_has_match(id, state)
       # IF THERE IS NO MATCH FOR USER BUT ITS STILL MONDAY
       else:
-        # SCHEDULE REPEATING THIS FUNCTION
-        scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state,))
-        # SHOW UNMATCH MENU
-        await set_state_unmatch(id, state)
+        if not await db.is_paused(id, conn):
+          # SCHEDULE REPEATING THIS FUNCTION
+          scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state,), id='check_%s' % id)
+          # SHOW UNMATCH MENU
+          await set_state_unmatch(id, state)
     # IF TODAY IS NOT MONDAY
     else:
       # IF NOT MONDAY - REPEAT AFTER days_till_monday DAYS and SHOW UNMATCH MENU
       days_till_monday = 7 - datetime.date.today().weekday()
       new_date = datetime.date.today() + datetime.timedelta(days=days_till_monday)
       run_date = datetime.datetime.combine(new_date, datetime.time(hour=9, minute=0))
-      scheduler.add_job(schedule_jobs, 'date', run_date=run_date, args=(id, state, False, )) # add job to scheduler
+      scheduler.add_job(schedule_jobs, 'date', run_date=run_date, args=(id, state, False, ), id = 'monday_%s' % id) # add job to scheduler
       if show_menu:
-        await state.reset_state(with_data=False)
         if not await db.is_paused(id, conn):
+          if edit:
+            await show_unpaused_no_match_menu(id, True, query)
+          else:
             await show_unpaused_no_match_menu(id)
         else:
+          if edit:
+            await show_paused_menu(id, True, query)
+          else:
             await show_paused_menu(id)
   # IF USER SUBSCRIBED
   else:
     if await is_match(id):
       # SHEDULE WARNING ABOUT ENDING TIME
-      # new_date = datetime.datetime.combine(datetime.date.today()+datetime.timedelta(minutes=10), datetime.time(hour=9, minute=0))
-      new_date = datetime.datetime.now() + datetime.timedelta(minutes=2)
-      scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=new_date, args=(id, state, ), id='unmatch_%s' % id)
+      new_date = datetime.datetime.combine(datetime.date.today()+datetime.timedelta(days=6), datetime.time(hour=9, minute=0))
+      #new_date = datetime.datetime.now() + datetime.timedelta(minutes=2)
+      if not await db.is_paused(id, conn):
+          scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=new_date, args=(id, state, ), id='unmatch_%s' % id)
       # SHOW HAS MATCH STATUS
-      await set_state_has_match(id, state)
+          await set_state_has_match(id, state)
     # IF THERE IS NO MATCH REPEAT AFTER 10 MINUTES
     # SHOW UNMATCH
     else:
       await state.reset_state()
-      scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=2), args=(id, state, False))
-      print(datetime.datetime.now())
       if show_menu:
         if not await db.is_paused(id, conn):
-          await show_unpaused_no_match_menu(id)
+          if edit:
+            scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state, False, ), id= 'check_%s' % id)
+            await show_unpaused_no_match_menu(id, True, query)
+          else:
+            scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state, False, ), id= 'check_%s' % id)
+            await show_unpaused_no_match_menu(id)
         else:
-          await show_paused_menu(id)
+          if edit:
+            scheduler.remove_job(job_id='check_%s' % id, jobstore='default')
+            await show_paused_menu(id, True, query)
+          else:
+            scheduler.remove_job(job_id='check_%s' % id, jobstore='default')
+            await show_paused_menu(id)
 
 
 # BOT MESSAGES MECHANICS
@@ -361,11 +382,15 @@ async def start(message: types.Message, state: FSMContext):
   Connecting to database and schedule jobs
   '''
   global conn
-  conn = await asyncpg.connect('postgresql://%s:%s@localhost/bot_tg' % (DB_USER, DB_PASSWORD))
+  conn = await asyncpg.connect('postgresql://%s:%s@localhost/bot_db' % (DB_USER, DB_PASSWORD))
   await db.table_ini(conn)
   await db.create_new_user(message.from_user.id, conn)
+  await db.set_algorithm_steps(message.from_user.id, conn, 30)
+  await db.set_likes(message.from_user.id, conn, 7)
+  await db.set_superlikes(message.from_user.id, conn, 5)
   await state.reset_state()
-  await schedule_jobs(message.from_user.id, state=state)
+  await show_starting_menu(message.from_user.id)
+  #await schedule_jobs(message.from_user.id, state=state)
 
 async def show_unpaused_no_match_menu(id: int, edit=False, query=None):
     r'''
@@ -437,7 +462,7 @@ async def show_about_text(query: types.CallbackQuery):
 @dp.callback_query_handler(text='uniqueness')
 async def show_uniqueness(query: types.CallbackQuery):
     uniqueness_inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='registr')
+    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     back_button = types.InlineKeyboardButton(buttons_texts.BACK, callback_data='back')
     uniqueness_inline_keyboard.add(back_button, registration_button)
     await query.message.edit_text(text=texts.UNIQUENESS, reply_markup=uniqueness_inline_keyboard)
@@ -446,7 +471,7 @@ async def show_uniqueness(query: types.CallbackQuery):
 @dp.callback_query_handler(text='imprint')
 async def show_imprint(query: types.CallbackQuery):
     imprint_inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='registr')
+    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     back_button = types.InlineKeyboardButton(buttons_texts.BACK, callback_data='back')
     imprint_inline_keyboard.add(registration_button)
     imprint_inline_keyboard.add(back_button)
@@ -456,7 +481,7 @@ async def show_imprint(query: types.CallbackQuery):
 @dp.callback_query_handler(text='user_agreement_1')
 async def show_user_agreement(query: types.CallbackQuery):
     user_agreement_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='registr')
+    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     forward_button = types.InlineKeyboardButton(buttons_texts.FORWARD, callback_data='user_agreement_2')
     back_button = types.InlineKeyboardButton(buttons_texts.BACK, callback_data='back')
     empty_button = types.InlineKeyboardButton('1 из 3', callback_data='free')
@@ -467,7 +492,7 @@ async def show_user_agreement(query: types.CallbackQuery):
 @dp.callback_query_handler(text='user_agreement_2')
 async def show_user_agreement2(query: types.CallbackQuery):
     user_agreement_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='registr')
+    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     forward_button = types.InlineKeyboardButton(buttons_texts.FORWARD, callback_data='user_agreement_3')
     back_button = types.InlineKeyboardButton(buttons_texts.BACK, callback_data='user_agreement_1')
     empty_button = types.InlineKeyboardButton('2 из 3', callback_data='free')
@@ -523,7 +548,7 @@ async def show_back(query: types.CallbackQuery):
 @dp.callback_query_handler(text='concept')
 async def show_concept(query: types.CallbackQuery):
     back_inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='registr')
+    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     back_button = types.InlineKeyboardButton(buttons_texts.BACK, callback_data='faq')
     back_inline_keyboard.add(registration_button)
     back_inline_keyboard.add(back_button)
@@ -533,7 +558,7 @@ async def show_concept(query: types.CallbackQuery):
 @dp.callback_query_handler(text='photo')
 async def show_photo(query: types.CallbackQuery):
     photo_inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='registr')
+    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     back_button = types.InlineKeyboardButton(buttons_texts.BACK, callback_data='faq')
     photo_inline_keyboard.add(registration_button)
     photo_inline_keyboard.add(back_button)
@@ -543,7 +568,7 @@ async def show_photo(query: types.CallbackQuery):
 @dp.callback_query_handler(text='find')
 async def show_find(query: types.CallbackQuery):
     find_inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='registr')
+    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     back_button = types.InlineKeyboardButton(buttons_texts.BACK, callback_data='faq')
     find_inline_keyboard.add(registration_button)
     find_inline_keyboard.add(back_button)
@@ -553,7 +578,7 @@ async def show_find(query: types.CallbackQuery):
 @dp.callback_query_handler(text='investors')
 async def show_investors(query: types.CallbackQuery):
     investors_inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='registr')
+    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     back_button = types.InlineKeyboardButton(buttons_texts.BACK, callback_data='faq')
     investors_inline_keyboard.add(registration_button)
     investors_inline_keyboard.add(back_button)
@@ -563,7 +588,7 @@ async def show_investors(query: types.CallbackQuery):
 @dp.callback_query_handler(text='journalists')
 async def show_journalists(query: types.CallbackQuery):
     journalists_inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='registr')
+    registration_button = types.InlineKeyboardButton(buttons_texts.BEGIN_REGISTRATION, callback_data='begin')
     back_button = types.InlineKeyboardButton(buttons_texts.BACK, callback_data='faq')
     journalists_inline_keyboard.add(registration_button)
     journalists_inline_keyboard.add(back_button)
@@ -657,6 +682,10 @@ async def show_male_menu(query: types.CallbackQuery, state: FSMContext):
 # SET birthday finish the STATE and let the user choose a city
 @dp.message_handler(state=Form.birthdate)
 async def check_date(message: types.Message, state:FSMContext):
+    # check birthday string in format DD.MM.YYYY
+    if not re.match(pattern=r'^\s*(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})\s*$', string=message.text):
+        await message.reply(texts.WRONG_BIRTHDATE)
+        return
     # chek the date with POST request
     async with aiohttp.ClientSession() as session:
       async with session.get(url='https://server.unison.dating/check_date', params={'birthday':message.text}) as resp:
@@ -727,6 +756,9 @@ async def show_female_menu(query: types.CallbackQuery, state: FSMContext):
 # SET birthday finish the STATE and let the user choose a city
 @dp.message_handler(state=Form.birthdate)
 async def check_date(message: types.Message, state:FSMContext):
+    if not re.match(pattern=r'^\s*(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})\s*$', string=message.text).span == (0, 10):
+        await message.reply(texts.WRONG_BIRTHDATE)
+        return
     # chek the date with POST requestg
     async with aiohttp.ClientSession() as session:
       async with session.get(url='https://server.unison.dating/check_date', params={'birthday':message.text}) as resp: 
@@ -882,8 +914,23 @@ async def show_under_construction(message: types.Message, state: FSMContext):
     keyboard.row(subscribe_button, again_button)
     await bot.send_message(message.from_user.id, text=texts.UNDER_CONSTRUCTION, reply_markup=keyboard)
 
+@dp.callback_query_handler(text='reason_again')
+async def reason_again(query: types.CallbackQuery, state: FSMContext):
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    seriously_button = types.InlineKeyboardButton(buttons_texts.SERIOUS_REL, callback_data='srsly')
+    family_button = types.InlineKeyboardButton(buttons_texts.FAMILY, callback_data='family')
+    friends_button = types.InlineKeyboardButton(buttons_texts.FRIENDS, callback_data='friends')
+    withou_obligations_button = types.InlineKeyboardButton(buttons_texts.FREE_USE, callback_data='no_duty')
+    no_answer_button = types.InlineKeyboardButton(buttons_texts.STUCK_ANSWER, callback_data='other_reason')
+    keyboard.add(seriously_button)
+    keyboard.add(family_button)
+    keyboard.add(friends_button)
+    keyboard.add(withou_obligations_button)
+    keyboard.add(no_answer_button)
+    await query.message.edit_text(texts.CHOSE_GOAL, reply_markup=keyboard)
+
 @dp.callback_query_handler(text='other_reason')
-async def show_under_construction(message: types.Message, state: FSMContext):
+async def show_under_construction(query: types.CallbackQuery, state: FSMContext):
     #------------------------------------------------------------------------------
     #-------------------------POST request for some STATISTIC----------------------
     # async with aiohttp.ClientSession() as session:
@@ -899,9 +946,9 @@ async def show_under_construction(message: types.Message, state: FSMContext):
     # _____________________________________________________________________________
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     subscribe_button = types.InlineKeyboardButton(buttons_texts.SUBSCRIBE, url='https://t.me/UnisonDating', callback_data='subscribe')
-    again_button = types.InlineKeyboardButton(buttons_texts.RESTART_REGISTRATION, callback_data='begin_registration')
+    again_button = types.InlineKeyboardButton(buttons_texts.CHANGE_REASON, callback_data='reason_again')
     keyboard.row(subscribe_button, again_button)
-    await bot.send_message(message.from_user.id, text=texts.UNDER_CONSTRUCTION, reply_markup=keyboard)
+    await query.message.edit_text(text=texts.UNDER_CONSTRUCTION, reply_markup=keyboard)
 
 # SET city as Moscow and ASK about goal of the relationship
 @dp.callback_query_handler(text='moscow')
@@ -1313,10 +1360,10 @@ async def upload_third_photo(message: types.Message, state: FSMContext):
     # keyboard.add(deny_photo)
     # keyboard.add(deny_all)
     # await moderator_bot.send_message(-1001693622168, text=texts.MODERATE_BOT, reply_markup=keyboard)
-    # os.remove(Path(r'profiles/%s/profile_photo.jpg' % message.from_user.id))
-    # os.remove(Path(r'profiles/%s/first_photo.jpg' % message.from_user.id))
-    # os.remove(Path(r'profiles/%s/second_photo.jpg' % message.from_user.id))
-    # os.remove(Path(r'profiles/%s/third_photo.jpg' % message.from_user.id))
+    os.remove(Path(r'profiles/%s/profile_photo.jpg' % message.from_user.id))
+    os.remove(Path(r'profiles/%s/first_photo.jpg' % message.from_user.id))
+    os.remove(Path(r'profiles/%s/second_photo.jpg' % message.from_user.id))
+    os.remove(Path(r'profiles/%s/third_photo.jpg' % message.from_user.id))
   
 
 # CONFIRMING EXTRA PHOTOS BEFORE UPLOADING
@@ -1348,7 +1395,7 @@ async def add_other_photos(query: types.CallbackQuery):
     inline_keyboard.add(letsgo_button)
     await query.message.edit_text(text=texts.START_EDUCATION, reply_markup=inline_keyboard)
 
-
+# ---------- EDUCATING ALGORITHM -----------------------------------------------------------------------
 @dp.callback_query_handler(text='rules_of_studing')
 async def show_rules_of_studing(query: types.CallbackQuery):
     inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
@@ -1433,7 +1480,7 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
             else:
                 # if setps and likes are ok and super_likes are =< 0
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
                 likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
@@ -1442,14 +1489,14 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
             if super_likes > 0:
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
                 super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
             else:
           # if steps are ok and likes and superlikes are not ok
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
     # if last step
@@ -1465,7 +1512,7 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
                 inline_keyboard.add(unlike_button)
             # and no super likes
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
                 likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
                 inline_keyboard.row(likes_button, super_like_button)
@@ -1475,14 +1522,14 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
           # have super likes
             if super_likes > 0:
                 super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
             # no super likes
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
@@ -1534,7 +1581,7 @@ async def second_algorithm_education(query: types.CallbackQuery, state: FSMConte
             else:
                 # if setps and likes are ok and super_likes are =< 0
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
                 likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
@@ -1543,14 +1590,14 @@ async def second_algorithm_education(query: types.CallbackQuery, state: FSMConte
             if super_likes > 0:
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
                 super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
             else:
           # if steps are ok and likes and superlikes are not ok
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
     # if last step
@@ -1566,7 +1613,7 @@ async def second_algorithm_education(query: types.CallbackQuery, state: FSMConte
                 inline_keyboard.add(unlike_button)
             # and no super likes
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
                 likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
                 inline_keyboard.row(likes_button, super_like_button)
@@ -1576,14 +1623,14 @@ async def second_algorithm_education(query: types.CallbackQuery, state: FSMConte
           # have super likes
             if super_likes > 0:
                 super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
             # no super likes
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
@@ -1640,7 +1687,7 @@ async def third_algorithm_education(query: types.CallbackQuery, state: FSMContex
             else:
                 # if setps and likes are ok and super_likes are =< 0
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
                 likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
@@ -1649,14 +1696,14 @@ async def third_algorithm_education(query: types.CallbackQuery, state: FSMContex
             if super_likes > 0:
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
                 super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
             else:
           # if steps are ok and likes and superlikes are not ok
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
     # if last step
@@ -1672,7 +1719,7 @@ async def third_algorithm_education(query: types.CallbackQuery, state: FSMContex
                 inline_keyboard.add(unlike_button)
             # and no super likes
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
                 likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
                 inline_keyboard.row(likes_button, super_like_button)
@@ -1682,14 +1729,14 @@ async def third_algorithm_education(query: types.CallbackQuery, state: FSMContex
           # have super likes
             if super_likes > 0:
                 super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
             # no super likes
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='free')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='free')
+                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
                 unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
                 inline_keyboard.row(likes_button, super_like_button)
                 inline_keyboard.add(unlike_button)
@@ -1727,8 +1774,13 @@ async def registration_final(message: types.Message, state: FSMContext):
     #     ]
     #   }) as resp: pass #print(await resp.text())
     # ______________________________________________________________________________________
-    await bot.send_message(message.chat.id, text=texts.FINAL_MESSAGE)
-    await schedule_jobs(message.from_user.id, state=state)
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    extra_photo = types.InlineKeyboardButton(buttons_texts.UPLOAD_EX_PHOTO, callback_data='likes_photo')
+    skip = types.InlineKeyboardButton(buttons_texts.SKIP, callback_data='skip')
+    keyboard.add(extra_photo)
+    keyboard.add(skip)
+    await bot.send_message(message.chat.id, text=texts.FINAL_MESSAGE, reply_markup=keyboard)
+    # await schedule_jobs(message.from_user.id, state=state)
 
 @dp.callback_query_handler(text='final_super_like')
 async def registration_final(message: types.Message, state: FSMContext):
@@ -1745,8 +1797,13 @@ async def registration_final(message: types.Message, state: FSMContext):
     #     ]
     #   }) as resp: pass #print(await resp.text())
     # ______________________________________________________________________________________
-    await bot.send_message(message.chat.id, text=texts.FINAL_MESSAGE)
-    await schedule_jobs(message.from_user.id, state=state)
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    extra_photo = types.InlineKeyboardButton(buttons_texts.UPLOAD_EX_PHOTO, callback_data='likes_photo')
+    skip = types.InlineKeyboardButton(buttons_texts.SKIP, callback_data='skip')
+    keyboard.add(extra_photo)
+    keyboard.add(skip)
+    await bot.send_message(message.chat.id, text=texts.FINAL_MESSAGE, reply_markup=keyboard)
+    # await schedule_jobs(message.from_user.id, state=state)
 
 @dp.callback_query_handler(text='final_unlike')
 async def registration_final(message: types.Message, state: FSMContext):
@@ -1763,16 +1820,126 @@ async def registration_final(message: types.Message, state: FSMContext):
     #     ]
     #   }) as resp: pass #print(await resp.text())
     # ______________________________________________________________________________________
-    await bot.send_message(message.from_user.id, text=texts.FINAL_MESSAGE)
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    extra_photo = types.InlineKeyboardButton(buttons_texts.UPLOAD_EX_PHOTO, callback_data='likes_photo')
+    skip = types.InlineKeyboardButton(buttons_texts.SKIP, callback_data='skip')
+    keyboard.add(extra_photo)
+    keyboard.add(skip)
+    await bot.send_message(message.from_user.id, text=texts.FINAL_MESSAGE, reply_markup=keyboard)
+    # await schedule_jobs(message.from_user.id, state=state)
+
+@dp.callback_query_handler(text='no_superlikes')
+async def no_superlikes(query: types.CallbackQuery):
+    await query.answer(text=texts.NO_SUPERLIKES)
+
+@dp.callback_query_handler(text='no_likes')
+async def no_likes(query: types.CallbackQuery):
+    await query.answer(text=texts.NO_LIKES)
+
+@dp.callback_query_handler(text='skip')
+async def skip(message: types.Message, state: FSMContext):
     await schedule_jobs(message.from_user.id, state=state)
+
+# ========= Uploading photos of persons who user likes =================================================
+@dp.callback_query_handler(text='likes_photo')
+async def likes_photo(query: types.CallbackQuery):
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    photo_recomendation = types.InlineKeyboardButton(text=buttons_texts.PHOTO_RECOMENDATION, callback_data='ex_recomendations')
+    upload_photos = types.InlineKeyboardButton(text=buttons_texts.UPLOAD_EXTRA_PHOTO, callback_data='upload_extra')
+    keyboard.add(photo_recomendation)
+    keyboard.add(upload_photos)
+    await query.message.edit_text(text=texts.EX_PHOTOS, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='upload_extra')
+async def upload_extra(query: types.CallbackQuery):
+    await query.message.edit_text(text=texts.FIRST_EX_PHOTOS)
+    await Form.extra_photo_1.set()
+@dp.message_handler(state=Form.extra_photo_1, content_types=types.ContentTypes.PHOTO)
+async def extra_photo_1(message: types.Message, state: FSMContext):
+    img = message.photo[-1].file_id
+    await message.photo[-1].download(destination_file=Path(r'profiles/%s/first_ex_photo.jpg' % message.from_user.id))
+    with open(Path(r'profiles/%s/first_ex_photo.jpg' % message.from_user.id), 'rb') as photo:
+        b64_str = base64.b64encode(photo.read())
+        await db.set_b64_likes_photo_1(message.from_user.id, conn, b64_str)
+    os.remove(Path(r'profiles/%s/first_ex_photo.jpg' % message.from_user.id))
+    await state.reset_state()
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    next_photo = types.InlineKeyboardButton(text=buttons_texts.SECOND_EXTRA, callback_data='second_extra')
+    end_photo = types.InlineKeyboardButton(text=buttons_texts.STOP_UPLOADING, callback_data='stop_uploading')
+    keyboard.add(next_photo)
+    keyboard.add(end_photo)
+    await bot.send_message(message.from_user.id, text=texts.SECOND_EXTRA_PHOTO, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='second_extra')
+async def second_extra(message: types.Message, state: FSMContext):
+    await bot.send_message(message.from_user.id, text=texts.SECOND_EX_PHOTO)
+    await Form.extra_photo_2.set()
+@dp.message_handler(state=Form.extra_photo_2, content_types=types.ContentTypes.PHOTO)
+async def extra_photo_second(message: types.Message, state: FSMContext):
+    img = message.photo[-1].file_id
+    await message.photo[-1].download(destination_file=Path(r'profiles/%s/second_ex_photo.jpg' % message.from_user.id))
+    with open(Path(r'profiles/%s/second_ex_photo.jpg' % message.from_user.id), 'rb') as photo:
+        b64_str = base64.b64encode(photo.read())
+        await db.set_b64_likes_photo_2(message.from_user.id, conn, b64_str)
+    os.remove(Path(r'profiles/%s/second_ex_photo.jpg' % message.from_user.id))
+    await state.reset_state()
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    next_photo = types.InlineKeyboardButton(text=buttons_texts.THIRD_EXTRA, callback_data='third_extra')
+    end_photo = types.InlineKeyboardButton(text=buttons_texts.STOP_UPLOADING, callback_data='stop_uploading')
+    keyboard.add(next_photo)
+    keyboard.add(end_photo)
+    await bot.send_message(message.from_user.id, text=texts.THIRD_EXTRA_PHOTO, reply_markup=keyboard)
+
+@dp.callback_query_handler(text='third_extra')
+async def third_extra(message: types.Message, state: FSMContext):
+    await bot.send_message(message.from_user.id, text=texts.THIRD_EX_PHOTOS)
+    await Form.extra_photo_3.set()
+@dp.message_handler(state=Form.extra_photo_3, content_types=types.ContentTypes.PHOTO)
+async def extra_photo_third(message: types.Message, state: FSMContext):
+    img = message.photo[-1].file_id
+    await message.photo[-1].download(destination_file=Path(r'profiles/%s/third_ex_photo.jpg' % message.from_user.id))
+    with open(Path(r'profiles/%s/third_ex_photo.jpg' % message.from_user.id), 'rb') as photo:
+        b64_str = base64.b64encode(photo.read())
+        await db.set_b64_likes_photo_3(message.from_user.id, conn, b64_str)
+    os.remove(Path(r'profiles/%s/third_ex_photo.jpg' % message.from_user.id))
+    await state.reset_state()
+    await schedule_jobs(message.from_user.id, state)
+
+@dp.callback_query_handler(text='stop_uploading')
+async def stop_uploading(message: types.Message, state: FSMContext):
+    await schedule_jobs(message.from_user.id, state)
+
+@dp.callback_query_handler(text='ex_recomendations')
+async def show_recomendation(query: types.CallbackQuery, state:FSMContext):
+    #------------------------------------------------------------------------------
+    #-------------------------POST request for some STATISTIC----------------------
+    # async with aiohttp.ClientSession() as session:
+    #   async with session.post(url='https://api.amplitude.com/2/httpapi', json={
+    #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
+    #     "events": [
+    #       {
+    #         "user_id": query.from_user.id,
+    #         "event_type": "bot_reg_guidelines_btn"
+    #       }
+    #     ]
+    #   }) as resp: pass #print(await resp.text())
+    #------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    upload_photo_button = types.InlineKeyboardButton(buttons_texts.UPLOAD_EXTRA_PHOTO, callback_data='upload_extra')
+    keyboard.add(upload_photo_button)
+    await query.message.edit_text(texts.PHOTO_RECOMENDATION, reply_markup=keyboard)
+# ______________________________________________________________________________________________________
+
 
 @dp.message_handler(commands='start_no_match')
 async def registration_final(message: types.Message, state: FSMContext):
     global conn
-    conn = await asyncpg.connect('postgresql://%s:%s@localhost/bot_tg' % (DB_USER, DB_PASSWORD))
+    conn = await asyncpg.connect('postgresql://%s:%s@localhost/bot_db' % (DB_USER, DB_PASSWORD))
     await bot.send_message(message.chat.id, text=texts.FINAL_MESSAGE)
+    await db.set_matching_pause_status(message.from_user.id, conn, False)
     await schedule_jobs(message.from_user.id, state=state)
-    scheduler.start()
+    #scheduler.start()
 #+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 #|                               WAITING FOR MATCH                                                                                                                            |
 #L____________________________________________________________________________________________________________________________________________________________________________l
@@ -1994,7 +2161,7 @@ async def request_when_tg_pressed(message: types.Message):
 # Main menu when user pause finding his match
 @dp.callback_query_handler(text='paused_main_menu')
 async def pause_menu(query: types.CallbackQuery, state: FSMContext):
-  await state.reset_state(with_data=False)
+  await state.reset_state()
   await db.set_matching_pause_status(query.from_user.id, conn, True)
   #-------------------------------------------------------------------------
   #---------------------POST request for STATISTIC--------------------------
@@ -2012,20 +2179,9 @@ async def pause_menu(query: types.CallbackQuery, state: FSMContext):
   # async with aiohttp.ClientSession() as session:
   #   async with session.post(url='https://server.unison.dating/user/pause?user_id=%s' % query.from_user.id, json={"pause": "true"}) as resp: pass
   #-------------------------------------------------------------------------
-  keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-  if await db.is_subscribed(query.from_user.id, conn):
-        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscription')
-  else:
-      subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscriptions')
-  write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
-  were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
-  pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
-  keyboard.add(subscribes_button)
-  keyboard.add(write_help)
-  keyboard.add(were_in_telegram_button)
-  keyboard.add(pause_button)
-  await query.message.edit_text(texts.PAUSE_MAIN_MENU)
-  await query.message.edit_reply_markup(reply_markup= keyboard)
+  await schedule_jobs(query.from_user.id, state, edit=True, query=query)
+
+
 # Main menu when user in proces of finding his match
 @dp.callback_query_handler(text='unpaused_main_menu')
 async def messaging_start(query: types.CallbackQuery, state: FSMContext):
@@ -2046,20 +2202,7 @@ async def messaging_start(query: types.CallbackQuery, state: FSMContext):
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/pause?user_id=%s' % query.from_user.id, json={"pause": "false"}) as resp: pass
     #-------------------------------------------------------------------------
-    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    if await db.is_subscribed(query.from_user.id, conn):
-        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscription')
-    else:
-        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscriptions')
-    write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
-    were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
-    pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
-    keyboard.add(subscribes_button)
-    keyboard.add(write_help)
-    keyboard.add(were_in_telegram_button)
-    keyboard.add(pause_button)
-    await query.message.edit_text(texts.MAIN_MENU)
-    await query.message.edit_reply_markup(reply_markup=keyboard)
+    await schedule_jobs(query.from_user.id, state=state, edit=True, query=query)
 
 
 # +==========================================================================================================================================================================+
