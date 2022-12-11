@@ -311,14 +311,16 @@ async def schedule_jobs(id: int, state: FSMContext, edit = False, query = None, 
           if not await db.is_paused(id, conn):
               new_date = datetime.datetime.combine(datetime.date.today()+datetime.timedelta(days=6), datetime.time(hour=9, minute=0))
               #new_date = datetime.datetime.now() + datetime.timedelta(minutes=2)
-              scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=new_date, args=(id, state, ), id='unmatch_%s' % id)
+              if not scheduler.get_job('unmatch_%s' % id):
+                scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=new_date, args=(id, state, ), id='unmatch_%s' % id)
               # SHOW HAS MATCH STATUS
               await set_state_has_match(id, state)
       # IF THERE IS NO MATCH FOR USER BUT ITS STILL MONDAY
       else:
         if not await db.is_paused(id, conn):
           # SCHEDULE REPEATING THIS FUNCTION
-          scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state,), id='check_%s' % id)
+          if not scheduler.get_job('check_%s' % id):
+            scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state,), id='check_%s' % id)
           # SHOW UNMATCH MENU
           await set_state_unmatch(id, state)
     # IF TODAY IS NOT MONDAY
@@ -327,7 +329,8 @@ async def schedule_jobs(id: int, state: FSMContext, edit = False, query = None, 
       days_till_monday = 7 - datetime.date.today().weekday()
       new_date = datetime.date.today() + datetime.timedelta(days=days_till_monday)
       run_date = datetime.datetime.combine(new_date, datetime.time(hour=9, minute=0))
-      scheduler.add_job(schedule_jobs, 'date', run_date=run_date, args=(id, state, False, ), id = 'monday_%s' % id) # add job to scheduler
+      if not scheduler.get_job('monday_%s' % id):
+        scheduler.add_job(schedule_jobs, 'date', run_date=run_date, args=(id, state, False, ), id = 'monday_%s' % id) # add job to scheduler
       if show_menu:
         if not await db.is_paused(id, conn):
           if edit:
@@ -346,7 +349,8 @@ async def schedule_jobs(id: int, state: FSMContext, edit = False, query = None, 
       new_date = datetime.datetime.combine(datetime.date.today()+datetime.timedelta(days=6), datetime.time(hour=9, minute=0))
       #new_date = datetime.datetime.now() + datetime.timedelta(minutes=2)
       if not await db.is_paused(id, conn):
-          scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=new_date, args=(id, state, ), id='unmatch_%s' % id)
+          if not scheduler.get_job('unmatch_%s' % id):
+            scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=new_date, args=(id, state, ), id='unmatch_%s' % id)
       # SHOW HAS MATCH STATUS
           await set_state_has_match(id, state)
     # IF THERE IS NO MATCH REPEAT AFTER 10 MINUTES
@@ -356,10 +360,12 @@ async def schedule_jobs(id: int, state: FSMContext, edit = False, query = None, 
       if show_menu:
         if not await db.is_paused(id, conn):
           if edit:
-            scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state, False, ), id= 'check_%s' % id)
+            if not scheduler.add_job('check_%s' % id):
+                scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state, False, ), id= 'check_%s' % id)
             await show_unpaused_no_match_menu(id, True, query)
           else:
-            scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state, False, ), id= 'check_%s' % id)
+            if not scheduler.add_job('check_%s' % id):
+                scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=30), args=(id, state, False, ), id= 'check_%s' % id)
             await show_unpaused_no_match_menu(id)
         else:
           if edit:
