@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-BEGIN_BUTTON = '✅Начать'
+BEGIN_BUTTON = '✅ Начать'
 
 START_REGISTRATION_BUTTON = '✅ Перейти к заполнению'
 
-SKIP = '🔴 Пропустить загрузку'
+SKIP = '🔴 Пропустить'
 
 GENDER_MALE = ['Я мужчина, ищу женщину', 'M']
 
@@ -19,13 +19,13 @@ SAMARA = '🏤 Самара'
 
 OTHER_CITY = '🌆 Другой город'
 
-NOMAD = '🏇 Я Кочевник'
+NOMAD = '✈️ Я Кочевник'
 
 SUBSCRIBE = '✅ Подписаться на наш канал'
 
 RESTART_REGISTRATION = '🔁 Начать регистрацию с начала'
 
-NEXT_STEP = 'Следующий шаг➡️'
+NEXT_STEP = 'Следующий шаг ➡️'
 
 SERIOUS_REL = '💙 Серьёзные отношения'
 
@@ -37,15 +37,15 @@ FREE_USE = 'Встречи без обязательств'
 
 STUCK_ANSWER = 'Затрудняюсь ответить'
 
-PHOTO_RECOMENDATION = '🔠 Рекомендации по загрузке'
+PHOTO_RECOMENDATION = 'ℹ️ Рекомендации по загрузке'
 
-UPLOAD_PHOTO = '⬆️ Загрузить фото'
+UPLOAD_PHOTO = '📷 Загрузить фото'
 
-YES = '✅Да'
+YES = '✅ Подтвердить'
 
-NO = '❌Нет'
+NO = '❌ Изменить'
 
-WATCH_PROFILE = '🧾Посмотреть профиль'
+WATCH_PROFILE = '🧾 Посмотреть профиль'
 
 CHECK_EXTRA_PHOTOS = '🔢 Проверить фотографии'
 
@@ -53,7 +53,7 @@ LETS_GO = '🌌 Перейти обучению алгоритма'
 
 UPLOAD_EXTRA_PHOTO = '🚀 Загрузить доп. фото'
 
-UPLOAD_EX_PHOTO = '🟢 Загрузить доп. фото'
+UPLOAD_EX_PHOTO = '🟢 Загрузить фото'
 
 STOP_UPLOADING = '📛 Завершить'
 
@@ -61,35 +61,35 @@ SECOND_EXTRA = '⬇️ Загрузить вторую фотографию'
 
 THIRD_EXTRA = '⬇️ Загрузить третью фотографию'
 
-BACK = '⬅️Назад'
+BACK = '⬅️ Назад'
 
-FORWARD = 'Вперед➡️'
+FORWARD = 'Вперед ➡️'
 
-BEGIN_REGISTRATION = '✅Начать регистрацию'
+BEGIN_REGISTRATION = '✅ Начать регистрацию'
 
 INFO_ABOUT_PROJECT = 'ℹ️ Читать о проекте'
 
-BACK_TO_THE_MENU = '🔁Обратно в меню'
+BACK_TO_THE_MENU = '🔁 Обратно в меню'
 
-ABOUT_PROJECT = '🧾О проекте'
+ABOUT_PROJECT = 'ℹ️ О проекте'
 
-UNIQ = '🔮Уникальность'
+UNIQ = '🔮 Уникальность'
 
-ABOUT_IMPRINTING = '💡Что такое импринтинг'
+ABOUT_IMPRINTING = '💡 Что такое импринтинг'
 
-USER_AGREEMENT = '📝Пользовательское соглашение'
+USER_AGREEMENT = '📝 Пользовательское соглашение'
 
-FAQ = '❓Частые вопросы'
+FAQ = '❓ Частые вопросы'
 
-CONCEPT = '📊Концепция сервиса'
+CONCEPT = '📊 Концепция сервиса'
 
-PHOTO = '🖼Фото пользователей'
+PHOTO = '🖼 Фото пользователей'
 
-FIND = '💑Поиск пары и оплата'
+FIND = '💑 Поиск пары и оплата'
 
-INVESTORS = '📈Партнеры и инвесторы'
+INVESTORS = '📈 Партнёры и инвесторы'
 
-JOURNALISTS = '📝Для журналистов'
+JOURNALISTS = '📝 Для журналистов'
 
 SUPER_LIKE = '💖 Очень нравится'
 
@@ -112,21 +112,21 @@ HELP_BUTTON = '👁‍🗨 Написать в поддержку'
 
 PAUSE = '⏸ Поставить на паузу'
 
-TELEGRAM_BUTTON = '🛂Мы в Телеграм'
+TELEGRAM_BUTTON = '🛂 Мы в Телеграм'
 
 DENY = '🔴 Отменить подписку'
 
-GET_SUBSCRIBE = '💵 Оформить подписку'
+GET_SUBSCRIBE = '🟢 Оформить подписку'
 
 UNPAUSE = '▶️ Снять с паузы'
 
-WANNA_MEET = '✅Хочу встретиться!'
+WANNA_MEET = '✅ Хочу встретиться!'
 
-SEND_PHOTO = '📸Отправить фото'
+SEND_PHOTO = '📸 Отправить фото'
 
-SEND_REQUEST = '🛑Отправить жалобу'
+SEND_REQUEST = '🛑 Отправить жалобу'
 
-END_DIALOG = '❌Завершить диалог'
+END_DIALOG = '❌ Завершить диалог'
 
 LOOK = 'Не понравилась внешность'
 
@@ -154,7 +154,7 @@ DONT_LIKE_MEETING = "Не понравилось"
 
 MAIN_MENU = "Показать главное меню"
 
-CONFIRM_READING = "🔥Отлично🔥"
+CONFIRM_READING = "🔥 Отлично 🔥"
 
 SMENA_BUTTON = '«Смена», кофейня'
 
@@ -172,9 +172,9 @@ PROPOGANDA = '«Пропаганда», кафе'
 
 SHE = '«She», ресторан'
 
-GET_SUBSC = "Оформить подпискуf"
+GET_SUBSC = "Оформить подписку"
 
-TRY_AGAIN = 'Попробовать еще раз'
+TRY_AGAIN = 'Попробовать ещё раз'
 
 CONFIRM_PROFILE = 'Одобрить профиль'
 
