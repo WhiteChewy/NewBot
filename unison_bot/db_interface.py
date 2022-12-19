@@ -125,40 +125,47 @@ async def get_super_likes(id: int, connection: asyncpg.connection.Connection) ->
 
 async def get_b64_profile_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
     row = await connection.fetchrow('SELECT b64_profile FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_profile'])
+    return row['b64_profile']
 
 async def get_b64_1st_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
     row = await connection.fetchrow('SELECT b64_1st FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_1st'])
+    return bytes(row['b64_1st'], encoding='utf-8')
 
 async def get_b64_2nd_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
     row = await connection.fetchrow('SELECT b64_2nd FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_2nd'])
+    return bytes(row['b64_2nd'], encoding='utf-8')
 
 async def get_b64_1st_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
     row = await connection.fetchrow('SELECT b64_3rd FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_3rd'])
+    return bytes(row['b64_3rd'], encoding='utf-8')
 
 async def get_b64_likes_photo_1(id: int, connection: asyncpg.connection.Connection) -> bytes:
     r'''
     Getting base64 bytes string of first image of person user like from database
     '''
     row = await connection.fetchrow('SELECT b64_likes_photo_1 FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_likes_photo_1'])
+    return bytes(row['b64_likes_photo_1'], encoding='utf-8')
 
 async def get_b64_likes_photo_2(id: int, connection: asyncpg.connection.Connection) -> bytes:
     r'''
     Getting base64 bytes string of second image of person user like from database
     '''
     row = await connection.fetchrow('SELECT b64_likes_photo_2 FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_likes_photo_2'])
+    return bytes(row['b64_likes_photo_2'], encoding='utf-8')
 
 async def get_b64_likes_photo_3(id: int, connection: asyncpg.connection.Connection) -> bytes:
     r'''
     Getting base64 bytes string of third image of person user like from database
     '''
     row = await connection.fetchrow('SELECT b64_likes_photo_3 FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_likes_photo_3'])
+    return bytes(row['b64_likes_photo_3'], encoding='utf-8')
+
+async def get_error_status(id: int, connection: asyncpg.connection.Connection) -> bool:
+    r'''
+    Get error status for input check
+    '''
+    row = await connection.fetchrow('SELECT error_status FROM users WHERE user_id=$1', id)
+    return row['error_status']
 
 #SET DATA (UPDATE table SET field)
 async def create_new_user(user_id: int, connection: asyncpg.connection.Connection, name='', city='',
@@ -173,7 +180,7 @@ async def create_new_user(user_id: int, connection: asyncpg.connection.Connectio
                         algorithm_steps=30, likes=7, super_likes=5,
                         b64_profile='', b64_1st='', b64_2nd='',
                         b64_3rd='', b64_likes_1 ='', b64_likes_2='',
-                        b64_likes_3=''):
+                        b64_likes_3='', error_status=False):
     # REGISTRATING NEW USER
     await connection.execute('''INSERT INTO users(user_id, name, city,
         gender, birthday, reason,
@@ -187,7 +194,7 @@ async def create_new_user(user_id: int, connection: asyncpg.connection.Connectio
         algorithm_steps, likes, super_likes,
         b64_profile, b64_1st, b64_2nd,
         b64_3rd, b64_likes_photo_1, b64_likes_photo_2,
-        b64_likes_photo_3) VALUES( $1, $2, $3,
+        b64_likes_photo_3, error_status) VALUES( $1, $2, $3,
             $4, $5, $6,
             $7, $8, $9,
             $10, $11, $12,
@@ -199,20 +206,33 @@ async def create_new_user(user_id: int, connection: asyncpg.connection.Connectio
             $28, $29, $30,
             $31, $32, $33,
             $34, $35, $36,
-            $37) ON CONFLICT (user_id) DO NOTHING;''',
+            $37, $38) ON CONFLICT (user_id) DO NOTHING;''',
+            #   1      2    3
             user_id, name, city,
+            #  4       5         6
             gender, birthday, reason,
+            #       7            8              9
             profile_photo, subscribtion, matching_pause,
+            #      10            11            12
             reason_to_stop, was_meeting, meeting_reaction,
+            #      13            14            15
             why_meeting_bad, payment_url, is_waiting_payment,
+            #   16      17       18
             has_match, help, first_time, 
+            #       19            20            21
             comunication_help, match_id, first_extra_photo,
+            #       22                  23               24
             second_extra_photo, third_extra_photo, is_moderated,
+            #       25                    26          27
             is_first_time_moderated, is_photo_ok, is_info_ok,
+            #       28         29        30
             algorithm_steps, likes, super_likes,
+            #    31         32       33
             b64_profile, b64_1st, b64_2nd,
+            #  34          35         36
             b64_3rd, b64_likes_1, b64_likes_2,
-            b64_likes_3)
+            #  37           38
+            b64_likes_3, error_status)
     
 async def set_name(id: int, connection: asyncpg.connection.Connection, name: str):
     await connection.execute('UPDATE users SET name=$1 WHERE user_id=$2', name, id)
@@ -331,6 +351,12 @@ async def set_b64_likes_photo_3(id: int, connection: asyncpg.connection.Connecti
     '''
     await connection.execute('UPDATE users SET b64_likes_photo_3=$1 WHERE user_id=$2', str(b64_string), id)
 
+async def set_error_status(id: int, connection: asyncpg.connection.Connection, status: bool):
+    r'''
+    Set error flag
+    '''
+    await connection.execute('UPDATE users SET error_status=$1 WHERE user_id=$2', status, id)
+
 async def table_ini(conn: asyncpg.connection.Connection):
     conn = await asyncpg.connect('postgresql://admin:sasuke007192@localhost/bot_db')
     await conn.execute('''
@@ -371,7 +397,8 @@ async def table_ini(conn: asyncpg.connection.Connection):
                 b64_3rd text,
                 b64_likes_photo_1 text,
                 b64_likes_photo_2 text,
-                b64_likes_photo_3 text
+                b64_likes_photo_3 text,
+                error_status bool
             )
     ''')
 
