@@ -157,3 +157,4 @@ config.py
 # TEST PHOTOS FROM DOWNLOAD DIRECTORY
 /profiles/*
 test.py
+logs
