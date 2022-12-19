@@ -2408,10 +2408,10 @@ async def message_reaction_if_text(message: types.Message):
 @dp.callback_query_handler(text='main_menu')
 async def messaging_start(query: types.CallbackQuery, state: FSMContext):
     if not await db.is_paused(query.from_user.id, conn):
-      await show_unpaused_no_match_menu(query.from_user.id, edit=True, query=query)
+      await show_unpaused_no_match_menu(query.from_user.id, query.from_user.first_name, query.from_user.last_name, edit=True, query=query)
       logger.info('[%s@%s_%s] отображение меню паузы в поиске мэтча' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     else:
-      await show_paused_menu(query.from_user.id, edit=True, query=query)
+      await show_paused_menu(query.from_user.id, query.from_user.first_name, query.from_user.last_name, edit=True, query=query)
       logger.info('[%s@%s_%s] отображение меню поиска мэтча' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
