@@ -12,6 +12,7 @@ import aiohttp
 import re
 import app_logger
 import aiofiles
+import logging
 
 from dateutil.relativedelta import relativedelta
 from payments import PRICES
@@ -30,8 +31,7 @@ bot = Bot(token=TESTING_TOKEN)
 moderator_bot = Bot(token=BOT_MODERATOR)
 dp = Dispatcher(bot, storage=MemoryStorage())
 scheduler = AsyncIOScheduler()
-logger = Logger()
-
+logger = app_logger.get_logger(__name__)
 
 # STATES FOR STATE MACHINE
 class Form(StatesGroup):
@@ -469,16 +469,10 @@ async def schedule_jobs(id: int, state: FSMContext, first_name ='', last_name=''
 # WELCOME MESSAGE AND CHOICE GO TO REGISTRATION OR READ ABOUT PROJECT
 @dp.message_handler(commands='start')
 async def start(message: types.Message, state: FSMContext):
-    r''', conn
+    r''' conn
     Connecting to database and schedule jobs
     '''
     st = state.get_state()
-    global logger
-    try:
-        os.remove(Path(r'logs/%s.log' % message.from_user.id))
-    except:
-        logger.warning('[%s@%s_%s] файл логов не найден. Создан новый файл' % (id, message.from_user.first_name, message.from_user.last_name))
-    logger = app_logger.get_logger(__name__)
     logger.info('[%s@%s_%s] Подключился к боту' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await state.reset_state()
     logger.info('[%s@%s_%s] Подключился к базе данных' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
@@ -1793,87 +1787,97 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
     logger.warning('[%s@%s_%s] получил количество лайков [%s]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, likes))
     super_likes = await  db.get_super_likes(query.from_user.id)
     logger.warning('[%s@%s_%s] получил количество суперлайков [%s]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, super_likes))
-    if steps > 1:
-        if  likes > 0:
-            if super_likes > 0:
-              # if steps and likes and super_likes are ok
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            else:
-                # if setps and likes are ok and super_likes are =< 0
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-        else:
-          # if steps are ok likes are not ok and superlikes are ok
-            if super_likes > 0:
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            else:
-          # if steps are ok and likes and superlikes are not ok
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-    # if last step
+    if likes == 0 and super_likes == 0:
+        keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+        extra_photo = types.InlineKeyboardButton(buttons_texts.UPLOAD_EX_PHOTO, callback_data='likes_photo')
+        skip = types.InlineKeyboardButton(buttons_texts.SKIP, callback_data='skip')
+        keyboard.add(extra_photo)
+        keyboard.add(skip)
+        await bot.send_message(query.chat.id, text=texts.FINAL_MESSAGE, reply_markup=keyboard)
+        logger.info('[%s@%s_%s] отображение фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
+        logger.warning('[%s@%s_%s] получение и загрузка [%s] фотографии для обучения' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, 30))
     else:
-        # have likes
-        if likes > 0:
-          # and super likes
-            if super_likes > 0:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            # and no super likes
+        if steps > 1:
+            if  likes > 0:
+                if super_likes > 0:
+                  # if steps and likes and super_likes are ok
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                else:
+                    # if setps and likes are ok and super_likes are =< 0
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-        # have no likes
+              # if steps are ok likes are not ok and superlikes are ok
+                if super_likes > 0:
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                else:
+              # if steps are ok and likes and superlikes are not ok
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+        # if last step
         else:
-          # have super likes
-            if super_likes > 0:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            # no super likes
+            # have likes
+            if likes > 0:
+              # and super likes
+                if super_likes > 0:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                # and no super likes
+                else:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+            # have no likes
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-    await query.answer(text=buttons_texts.ANSWER_STUDY % (31-steps, likes, super_likes), show_alert=True)
-    # async with aiohttp.ClientSession() as session:
-    #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-    #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id),
-    #     "answer": {
-    #       30-steps: "0"
-    #     }
-    #   }) as resp: 
-    #       response = json.loads(await resp.text()) 
-    #       #print(await resp.text())
-    await query.message.delete()
-    #await bot.send_photo(query.from_user.id, photo=response['url'], reply_markup=inline_keyboard)
-    async with aiofiles.open('pic/testing_thirty/%s.jpg'%(31-steps), 'rb') as img:
-      await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
-    logger.info('[%s@%s_%s] отображение фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    logger.warning('[%s@%s_%s] получение и загрузка [%s] фотографии для обучения' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, (31-steps)))
+              # have super likes
+                if super_likes > 0:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                # no super likes
+                else:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-steps, likes, super_likes), show_alert=True)
+        # async with aiohttp.ClientSession() as session:
+        #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
+        #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id),
+        #     "answer": {
+        #       30-steps: "0"
+        #     }
+        #   }) as resp: 
+        #       response = json.loads(await resp.text()) 
+        #       #print(await resp.text())
+        await query.message.delete()
+        #await bot.send_photo(query.from_user.id, photo=response['url'], reply_markup=inline_keyboard)
+        async with aiofiles.open('pic/testing_thirty/%s.jpg'%(31-steps), 'rb') as img:
+          await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
+        logger.info('[%s@%s_%s] отображение фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
+        logger.warning('[%s@%s_%s] получение и загрузка [%s] фотографии для обучения' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, (31-steps)))
 
 @dp.callback_query_handler(text='like_educate_algorithm')
 async def second_algorithm_education(query: types.CallbackQuery, state: FSMContext):
@@ -1897,91 +1901,101 @@ async def second_algorithm_education(query: types.CallbackQuery, state: FSMConte
     steps = await db.get_algorithm_steps(query.from_user.id)
     likes = await db.get_likes(query.from_user.id)
     super_likes = await  db.get_super_likes(query.from_user.id)
-    if steps > 1:
-        if  likes > 0:
-            if super_likes > 0:
-              # if steps and likes and super_likes are ok
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            else:
-                # if setps and likes are ok and super_likes are =< 0
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-        else:
-          # if steps are ok likes are not ok and superlikes are ok
-            if super_likes > 0:
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            else:
-          # if steps are ok and likes and superlikes are not ok
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-    # if last step
+    if likes == 0 and super_likes == 0:
+        keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+        extra_photo = types.InlineKeyboardButton(buttons_texts.UPLOAD_EX_PHOTO, callback_data='likes_photo')
+        skip = types.InlineKeyboardButton(buttons_texts.SKIP, callback_data='skip')
+        keyboard.add(extra_photo)
+        keyboard.add(skip)
+        await bot.send_message(query.chat.id, text=texts.FINAL_MESSAGE, reply_markup=keyboard)
+        logger.info('[%s@%s_%s] отображение фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
+        logger.warning('[%s@%s_%s] получение и загрузка [%s] фотографии для обучения' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, 30))
     else:
-        # have likes
-        if likes > 0:
-          # and super likes
-            if super_likes > 0:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            # and no super likes
+        if steps > 1:
+            if  likes > 0:
+                if super_likes > 0:
+                  # if steps and likes and super_likes are ok
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                else:
+                    # if setps and likes are ok and super_likes are =< 0
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-        # have no likes
+              # if steps are ok likes are not ok and superlikes are ok
+                if super_likes > 0:
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                else:
+              # if steps are ok and likes and superlikes are not ok
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+        # if last step
         else:
-          # have super likes
-            if super_likes > 0:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            # no super likes
+            # have likes
+            if likes > 0:
+              # and super likes
+                if super_likes > 0:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                # and no super likes
+                else:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+            # have no likes
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-    await query.answer(text=buttons_texts.ANSWER_STUDY % (31-steps, likes, super_likes), show_alert=True)
-    #------------------------------------------------------------------------------------------------------------------------------------------------------
-    #--------------------------------------------------POST request to GET PHOTO and MAKING DATASET--------------------------------------------------------
-    # async with aiohttp.ClientSession() as session:
-    #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-    #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id),
-    #     "answer": {
-    #       30-steps: "1"
-    #     }
-    #   }) as resp: 
-    #     request = json.loads(await resp.text())
-          #print(await resp.text())
-    #------------------------------------------------------------------------------------------------------------------------------------------------------
-    #------------------------------------------------------------------------------------------------------------------------------------------------------
-    await query.message.delete()
-    #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
-    async with aiofiles.open('pic/testing_thirty/%s.jpg' % (31-steps), 'rb') as img:
-      await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
-    logger.info('[%s@%s_%s] отображение фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    logger.warning('[%s@%s_%s] получение и загрузка [%s] фотографии для обучения' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, (31-steps)))
+              # have super likes
+                if super_likes > 0:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                # no super likes
+                else:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-steps, likes, super_likes), show_alert=True)
+        #------------------------------------------------------------------------------------------------------------------------------------------------------
+        #--------------------------------------------------POST request to GET PHOTO and MAKING DATASET--------------------------------------------------------
+        # async with aiohttp.ClientSession() as session:
+        #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
+        #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id),
+        #     "answer": {
+        #       30-steps: "1"
+        #     }
+        #   }) as resp: 
+        #     request = json.loads(await resp.text())
+              #print(await resp.text())
+        #------------------------------------------------------------------------------------------------------------------------------------------------------
+        #------------------------------------------------------------------------------------------------------------------------------------------------------
+        await query.message.delete()
+        #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
+        async with aiofiles.open('pic/testing_thirty/%s.jpg' % (31-steps), 'rb') as img:
+          await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
+        logger.info('[%s@%s_%s] отображение фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
+        logger.warning('[%s@%s_%s] получение и загрузка [%s] фотографии для обучения' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, (31-steps)))
 
 @dp.callback_query_handler(text='superlike_educate_algorithm')
 async def third_algorithm_education(query: types.CallbackQuery, state: FSMContext):
@@ -2006,91 +2020,101 @@ async def third_algorithm_education(query: types.CallbackQuery, state: FSMContex
     steps = await db.get_algorithm_steps(query.from_user.id)
     likes = await db.get_likes(query.from_user.id)
     super_likes = await  db.get_super_likes(query.from_user.id)
-    if steps > 1:
-        if  likes > 0:
-            if super_likes > 0:
-              # if steps and likes and super_likes are ok
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            else:
-                # if setps and likes are ok and super_likes are =< 0
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-        else:
-          # if steps are ok likes are not ok and superlikes are ok
-            if super_likes > 0:
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            else:
-          # if steps are ok and likes and superlikes are not ok
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-    # if last step
+    if likes == 0 and super_likes == 0:
+        keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+        extra_photo = types.InlineKeyboardButton(buttons_texts.UPLOAD_EX_PHOTO, callback_data='likes_photo')
+        skip = types.InlineKeyboardButton(buttons_texts.SKIP, callback_data='skip')
+        keyboard.add(extra_photo)
+        keyboard.add(skip)
+        await bot.send_message(query.chat.id, text=texts.FINAL_MESSAGE, reply_markup=keyboard)
+        logger.info('[%s@%s_%s] отображение фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
+        logger.warning('[%s@%s_%s] получение и загрузка [%s] фотографии для обучения' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, 30))
     else:
-        # have likes
-        if likes > 0:
-          # and super likes
-            if super_likes > 0:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            # and no super likes
+        if steps > 1:
+            if  likes > 0:
+                if super_likes > 0:
+                  # if steps and likes and super_likes are ok
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                else:
+                    # if setps and likes are ok and super_likes are =< 0
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-        # have no likes
+              # if steps are ok likes are not ok and superlikes are ok
+                if super_likes > 0:
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                else:
+              # if steps are ok and likes and superlikes are not ok
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+        # if last step
         else:
-          # have super likes
-            if super_likes > 0:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-            # no super likes
+            # have likes
+            if likes > 0:
+              # and super likes
+                if super_likes > 0:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                # and no super likes
+                else:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='final_like')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+            # have no likes
             else:
-                super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
-                likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
-                unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
-                inline_keyboard.row(likes_button, super_like_button)
-                inline_keyboard.add(unlike_button)
-    await query.answer(text=buttons_texts.ANSWER_STUDY % (31-steps, likes, super_likes), show_alert=True)
-    # -----------------------------------------------------------------------------------------------------------------------------------------------------
-    # ----------------------------------------------   POST request to GET PHOTO and MAKING DATASET   -----------------------------------------------------
-    # async with aiohttp.ClientSession() as session:
-    #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-    #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id),
-    #     "answer": {
-    #       30-await db.get_algorithm_steps(query.from_user.id): "2"
-    #     }
-    #   }) as resp: 
-    #        request = json.loads(await resp.text())
-    #        print(await resp.text())
-    # _____________________________________________________________________________________________________________________________________________________
-
-    await query.message.delete()
-    #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
-    async with aiofiles.open('pic/testing_thirty/%s.jpg'%(31-steps), 'rb') as img:
-      await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
-    logger.info('[%s@%s_%s] отображение фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    logger.warning('[%s@%s_%s] получение и загрузка [%s] фотографии для обучения' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, (31-steps)))
+              # have super likes
+                if super_likes > 0:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='final_super_like')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+                # no super likes
+                else:
+                    super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='no_superlikes')
+                    likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='no_likes')
+                    unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='final_unlike')
+                    inline_keyboard.row(likes_button, super_like_button)
+                    inline_keyboard.add(unlike_button)
+        await query.answer(text=buttons_texts.ANSWER_STUDY % (31-steps, likes, super_likes), show_alert=True)
+        # -----------------------------------------------------------------------------------------------------------------------------------------------------
+        # ----------------------------------------------   POST request to GET PHOTO and MAKING DATASET   -----------------------------------------------------
+        # async with aiohttp.ClientSession() as session:
+        #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
+        #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id),
+        #     "answer": {
+        #       30-await db.get_algorithm_steps(query.from_user.id): "2"
+        #     }
+        #   }) as resp: 
+        #        request = json.loads(await resp.text())
+        #        print(await resp.text())
+        # _____________________________________________________________________________________________________________________________________________________
+    
+        await query.message.delete()
+        #await bot.send_photo(query.from_user.id, photo=request['url'], reply_markup=inline_keyboard)
+        async with aiofiles.open('pic/testing_thirty/%s.jpg'%(31-steps), 'rb') as img:
+          await bot.send_photo(query.from_user.id, photo=img, reply_markup=inline_keyboard)
+        logger.info('[%s@%s_%s] отображение фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
+        logger.warning('[%s@%s_%s] получение и загрузка [%s] фотографии для обучения' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, (31-steps)))
 
 @dp.callback_query_handler(text='final_like')
 async def registration_final(message: types.Message, state: FSMContext):
