@@ -30,20 +30,20 @@ def get_stream_handler() -> logging.Handler:
     return stream_handler
 
 
-def get_rotation_handler(id: int) -> logging.Handler:
+def get_rotation_handler() -> logging.Handler:
     r'''
     Getting Rotating File Handler for logger
     '''
     rotation_handler = logging.handlers.RotatingFileHandler(
-        filename=Path('logs/%s.log' % id),
+        filename=Path('logs/logging.log'),
         maxBytes=1000000,
-        backupCount=2,
+        backupCount=6,
         encoding='utf-8'
     )
     return rotation_handler
 
 
-def get_logger(name=__name__, id=0) -> logging.Logger:
+def get_logger(name=__name__) -> logging.Logger:
     r'''
     Get logger object with:
     level = INFO,
@@ -53,7 +53,7 @@ def get_logger(name=__name__, id=0) -> logging.Logger:
     '''
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    logger.addHandler(get_file_handler(id))
-    logger.addHandler(get_rotation_handler(id))
+    logger.addHandler(get_file_handler())
+    logger.addHandler(get_rotation_handler())
     logger.addHandler(get_stream_handler())
     return logger
