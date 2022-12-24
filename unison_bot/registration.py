@@ -13,25 +13,24 @@ import re
 import app_logger
 import aiofiles
 
-from logging import Logger
-from starting_menu import *
+from dateutil.relativedelta import relativedelta
+from payments import PRICES
+from aiologger import Logger
 from pathlib import Path
-#from aiogram.dispatcher.filters import Filter
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from config import TOKEN, DB_PASSWORD, DB_USER, DB_ADRESS, TESTING_TOKEN, BOT_MODERATOR
+from config import TOKEN, DB_PASSWORD, DB_USER, DB_ADRESS, TESTING_TOKEN, BOT_MODERATOR, PAY_TOKEN
 
 
 bot = Bot(token=TESTING_TOKEN)
 moderator_bot = Bot(token=BOT_MODERATOR)
 dp = Dispatcher(bot, storage=MemoryStorage())
 scheduler = AsyncIOScheduler()
-сonn = None
-logger = Logger(None)
+logger = Logger()
 
 
 # STATES FOR STATE MACHINE
@@ -100,73 +99,73 @@ class Form(StatesGroup):
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_ONE)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_ONE)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_ONE)
 
 @dp.callback_query_handler(state = Form.game2)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_TWO)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_TWO)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_TWO)
   
 @dp.callback_query_handler(state = Form.game3)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_THREE)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_THREE)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_THREE)
   
 @dp.callback_query_handler(state = Form.game4)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_FOUR)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_FOUR)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_FOUR)
   
 @dp.callback_query_handler(state = Form.game5)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_FIVE)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_FIVE)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_FIVE)
   
 @dp.callback_query_handler(state = Form.game6)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_SIX)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_SIX)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_SIX)
   
 @dp.callback_query_handler(state = Form.game7)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_SIX)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_SIX)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_SIX)
   
 @dp.callback_query_handler(state = Form.game8)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_EIGHT)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_EIGHT)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_EIGHT)
   
 @dp.callback_query_handler(state = Form.game9)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_NINE)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_NINE)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_NINE)
   
 @dp.callback_query_handler(state = Form.game10)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_TEN)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_TEN)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_TEN)
   
 @dp.callback_query_handler(state = Form.game11)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_ELEVEN)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_ELEVEN)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_ELEVEN)
   
 @dp.callback_query_handler(state=Form.game12)
 async def game_one(message: types.Message, state: FSMContext):
   await state.reset_state()
   await bot.send_message(message.from_user.id, text=texts.GAME_TWELVE)
-  await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.GAME_TWELVE)
+  await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.GAME_TWELVE)
   
 # **************************************************************************************************************************************************************************************************
 # **************************************************************************************************************************************************************************************************
@@ -192,11 +191,11 @@ async def get_advice(id: int, state: FSMContext):
   random.shuffle(first_day_hints)
   random.shuffle(hints)
   if first_day_hints:
-    if await db.is_matching(id, conn):
+    if await db.is_matching(id):
       await bot.send_message(id, text=first_day_hints.pop(0))
       scheduler.add_job(get_advice, 'date', run_date=datetime.datetime.now()+datetime.timedelta(hours=15), args=(id, state, ))
   elif hints:
-    if await db.is_matching(id, conn):
+    if await db.is_matching(id):
       await bot.send_message(id, text=hints.pop(0))
       scheduler.add_job(get_advice, 'date', run_date=datetime.datetime.now()+datetime.timedelta(hours=15), args=(id, state, ))
 
@@ -204,13 +203,13 @@ async def is_match(id: int) -> bool:
   r'''
   Get information about is user has match, or not. Return TRUE - if yes, FALSE - if no
   '''
-  return await db.is_matching(id, conn)
+  return await db.is_matching(id)
 
 async def is_premium(id: int) -> bool:
   r'''
   Get information if user has subscription, or not. Return True - if yes, FALSE - if no
   '''
-  return await db.is_subscribed(id, conn)
+  return await db.is_subscribed(id)
 
 async def is_monday() -> bool:
   r'''
@@ -229,7 +228,7 @@ async def set_state_unmatch(id: int, state: FSMContext, first_name: str, last_na
     '''
     if unmatch_menu:
         logger.info('[%s@%s_%s] показываю unmatch menu' % (id, first_name, last_name))
-        await db.set_match_status(id, conn, False)
+        await db.set_match_status(id, False)
         logger.warning('[%s@%s_%s] установил match status равным False' % (id, first_name, last_name))
         # --------------------------------------------------------
         # -------------POST request for some statistics-----------
@@ -244,7 +243,6 @@ async def set_state_unmatch(id: int, state: FSMContext, first_name: str, last_na
         #     ]
         #   }) as resp: pass
         # --------------------------------------------------------
-        await state.reset_state()
         logger.warning('[%s@%s_%s] FSM state has_match OFF' % (id, first_name, last_name))
         keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
         dont_like_look_button = types.InlineKeyboardButton(text=buttons_texts.LOOK, callback_data='callback_look')
@@ -260,14 +258,14 @@ async def set_state_unmatch(id: int, state: FSMContext, first_name: str, last_na
     else:
         await state.reset_state()
         logger.warning('[%s@%s_%s] FSM state has_match OFF' % (id, first_name, last_name))
-        is_matching = await db.is_matching(id, conn)
+        is_matching = await db.is_matching(id)
         logger.warning('[%s@%s_%s] получил из бд статус найденной пары [%s]' % (id, first_name, last_name, is_matching))
-        is_paused = await db.is_paused(id, conn)
+        is_paused = await db.is_paused(id)
         if is_paused:
-            await db.set_matching_pause_status(id, conn, False)
+            await db.set_matching_pause_status(id, False)
             logger.warning('[%s@%s_%s] занес в БД статус паузы в поиске партнера [%s]' % (id, first_name, last_name, False))
         if is_matching:
-            await db.set_match_status(id, conn, False)
+            await db.set_match_status(id, False)
             logger.warning('[%s@%s_%s] занес в БД статус найденной пары [%s]' % (id, first_name, last_name, False))
         logger.info('[%s@%s_%s] Вывод меню Пара не найдена - Поиск пары' % (id, first_name, last_name))
         await show_unpaused_no_match_menu(id)
@@ -276,39 +274,38 @@ async def set_state_one_day_to_unmatch(id: int, state: FSMContext, first_name: s
     r'''Function to warn user that he has only one day left to comunicate with his match'''
     #scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.date.today()+datetime.timedelta(days=1), args=(id, state, first_name, last_name, True, ))
     scheduler.add_job(set_state_unmatch, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=1), args=(id, state, first_name, last_name, True, ))
-    match_id = await db.get_match_id(id, conn)
+    match_id = await db.get_match_id(id)
     logger.warning('[%s@%s_%s] получил match id из БД' % (id, first_name, last_name))
-    match_name = await db.get_name(match_id, conn)
+    match_name = await db.get_name(match_id)
     logger.warning('[%s@%s_%s] получил match name из БД' % (id, first_name, last_name))
     logger.info('[%s@%s_%s] отправлено предупреждение о том что остался один день до unmatch' % (id, first_name, last_name))
-    await bot.send_message(id, text=texts.ONE_DAY_TO_UNMATCH % match_name)
+    bot.send_message(id, text=texts.ONE_DAY_TO_UNMATCH % match_name)
 
 async def set_state_has_match(id: int, state: FSMContext, first_name: str, last_name: str, show_menu = True):
     r'''Set User matchinbg status as True and edit his profile in data base'''
     # if its first match for user
-    is_first_time = await db.is_first_time(id, conn)
+    await Form.has_match.set()
+    st = dp.current_state(chat=await db.get_match_id(id), user=await db.get_match_id(id))
+    await st.set_state(Form.has_match)
     logger.warning('[%s@%s_%s] получил статус first time' % (id, first_name, last_name))
-    if is_first_time:
-        await db.set_first_time_status(id, conn, False)
+    if await db.is_first_time(id):
+        await db.set_first_time_status(id, False)
         logger.warning('[%s@%s_%s] установить статус first time равный False' % (id, first_name, last_name))
     await bot.send_message(id, text=texts.NEW_MATCH)
     #--------------------------------------------------------------------------------------
     #-----------------   getting match INFO   ---------------------------------------------
-    match_id = await db.get_match_id(id, conn)
-    logger.warning('[%s@%s_%s] получил match id равный [%s]' % (id, first_name, last_name, match_id))
-    match_name = await db.get_name(match_id, conn)
-    logger.warning('[%s@%s_%s] получил match name равный [%s]' % (id, first_name, last_name, match_name))
-    match_city = await db.get_city(match_id, conn)
-    logger.warning('[%s@%s_%s] получил match city равный [%s]' % (id, first_name, last_name, match_city))
-    match_reason = await db.get_reason(match_id, conn)
-    logger.warning('[%s@%s_%s] получил match_reason равный [%s]' % (id, first_name, last_name, match_reason))
+    logger.warning('[%s@%s_%s] получил match id равный [%s]' % (id, first_name, last_name, await db.get_match_id(id)))
+    logger.warning('[%s@%s_%s] получил match name равный [%s]' % (id, first_name, last_name, await db.get_name(await db.get_match_id(id))))
+    logger.warning('[%s@%s_%s] получил match city равный [%s]' % (id, first_name, last_name, await db.get_city(await db.get_match_id(id))))
+    logger.warning('[%s@%s_%s] получил match_reason равный [%s]' % (id, first_name, last_name, await db.get_reason(await db.get_match_id(id))))
     # _____________________________________________________________________________________
     # ----------------   creating match photo from base64 string   ------------------------
-    b64_str = await db.get_b64_profile_photo(match_id, conn)
+    await db.get_b64_profile_photo(await db.get_match_id(id))
     logger.warning('[%s@%s_%s] получил фотографию мэтча как строку base64' % (id, first_name, last_name))
+    b64_im = await db.get_b64_profile_photo(await db.get_match_id(id))
     try:
         async with aiofiles.open(Path(r'profiles/%s/match_photo.jpg' % id), 'wb') as match_photo:
-            await match_photo.write(base64.b64decode(b64_str[1:]))
+            await match_photo.write(base64.b64decode(b64_im[1:]))
         logger.warning('[%s@%s_%s] записал фото из строки base64 profiles/%s/match_photo.jpg' % (id, first_name, last_name, id))
     except:
         logger.warning('[%s@%s_%s] ошибка во время открытия match_photo.jpg.' % (id, first_name, last_name))
@@ -330,7 +327,9 @@ async def set_state_has_match(id: int, state: FSMContext, first_name: str, last_
     keyboard.row(send_request, end_dialog)
     try:
         async with aiofiles.open(Path(r'profiles/%s/match_photo.jpg' % id), 'rb') as profile_pic:
-            await bot.send_photo(id, photo=profile_pic, caption=texts.MATCH_INFO % (match_name, match_city, match_reason))
+            await bot.send_photo(id, photo=profile_pic, caption=texts.MATCH_INFO % (await db.get_name(await db.get_match_id(id)), 
+                                                                                    await db.get_city(await db.get_match_id(id)), 
+                                                                                    await db.get_reason(await db.get_match_id(id))))
         logger.warning('[%s@%s_%s] отправил фотографию мэтча' % (id, first_name, last_name))
     except:
         logger.warning('[%s@%s_%s] ошибка во время открытия match_photo.jpg.' % (id, first_name, last_name))
@@ -348,27 +347,26 @@ async def set_state_has_match(id: int, state: FSMContext, first_name: str, last_
     await bot.send_message(id, text=texts.FIND_MATCH, reply_markup= keyboard)
     await get_advice(id, state)
     logger.info('[%s@%s_%s] вывел совет' % (id, first_name, last_name))
-    await Form.has_match.set()
     logger.warning('[%s@%s_%s] FSM state has_match ON' % (id, first_name, last_name))
+    
 
 async def schedule_jobs(id: int, state: FSMContext, first_name ='', last_name='', need_edit = False, query = None, show_menu=True):
     r'''
     Time scheduler to unmatch and warn users by timer. Using AsyncIOScheduler
     id - user telegram id, 
     '''
-    logger.info('[%s@%s_%s] запуск диспетчера задач с выводом нужных меню' % (id, first_name, last_name))
-    await state.reset_state()
-    first_time = await db.is_first_time(id, conn)
-    is_prem = await is_premium(id)
-    has_match = await is_match(id)
+    #logger.info('[%s@%s_%s] запуск диспетчера задач с выводом нужных меню' % (id, first_name, last_name))
+    if dp.get_current().current_state() == Form.no_match:
+        await state.reset_state()
+    
     # IF USER NOT SUBSCRIBED
-    if not is_prem and not first_time:
+    if not await is_premium(id) and not await db.is_first_time(id):
         # IF TODAY IS MONDAY
         if await is_monday():
           # IF THERE IS MATCH FOR USER
-          if has_match:
+          if await is_match(id):
               # SHEDULE WARNING ABOUT ENDING TIME
-              if not await db.is_paused(id, conn):
+              if not await db.is_paused(id):
                   #new_date = datetime.datetime.combine(datetime.date.today()+datetime.timedelta(days=6), datetime.time(hour=9, minute=0))
                   new_date = datetime.datetime.now() + datetime.timedelta(minutes=10)
                   if not scheduler.get_job('unmatch_%s' % id):
@@ -380,7 +378,7 @@ async def schedule_jobs(id: int, state: FSMContext, first_name ='', last_name=''
                       await set_state_has_match(id, state)
           # IF THERE IS NO MATCH FOR USER BUT ITS STILL MONDAY
           else:
-            if not await db.is_paused(id, conn):
+            if not await db.is_paused(id):
               # SCHEDULE REPEATING THIS FUNCTION
               if not scheduler.get_job('check_%s' % id):
                   scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=5), args=(id, state, first_name, last_name, ), id='check_%s' % id)
@@ -397,34 +395,32 @@ async def schedule_jobs(id: int, state: FSMContext, first_name ='', last_name=''
           run_date = datetime.datetime.combine(new_date, datetime.time(hour=9, minute=0))
           if not scheduler.get_job('monday_%s' % id):
             scheduler.add_job(schedule_jobs, 'date', run_date=run_date, args=(id, state, first_name, last_name, False, ), id = 'monday_%s' % id) # add job to scheduler
-            logger.warning('[%s@%s_%s] add job schedule_jobs [not premium, not first time, not monday]' % (id, first_name, last_name))
+            #logger.warning('[%s@%s_%s] add job schedule_jobs [not premium, not first time, not monday]' % (id, first_name, last_name))
           if show_menu:
-            if not await db.is_paused(id, conn):
+            if not await db.is_paused(id):
               if need_edit:
-                  logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu, not paused, need edit]' % (id, first_name, last_name))
+                  #logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu, not paused, need edit]' % (id, first_name, last_name))
                   await show_unpaused_no_match_menu(id, first_name, last_name, True, query)
               else:
-                  logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu, not paused, not need edit]' % (id, first_name, last_name))
+                  #logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu, not paused, not need edit]' % (id, first_name, last_name))
                   await show_unpaused_no_match_menu(id, first_name, last_name)
             else:
               if need_edit:
-                  logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu, paused, need edit]' % (id, first_name, last_name))
+                  #logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu, paused, need edit]' % (id, first_name, last_name))
                   await show_paused_menu(id, first_name, last_name, True, query)
               else:
-                  logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu, paused, not need edit]' % (id, first_name, last_name))
+                  #logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu, paused, not need edit]' % (id, first_name, last_name))
                   await show_paused_menu(id, first_name, last_name)
     # IF USER SUBSCRIBED or ITS FIRST TIME
     else:
       if await is_match(id):
         # SHEDULE WARNING ABOUT ENDING TIME 
         #new_date = datetime.datetime.combine(datetime.date.today()+datetime.timedelta(days=6), datetime.time(hour=9, minute=0))
-        first_time = await db.is_first_time(id, conn)
-        new_date = datetime.datetime.now() + datetime.timedelta(minutes=10)
-        if first_time:
-            await db.set_first_time_status(id, conn, False)
-        if not await db.is_paused(id, conn):
+        if await db.is_first_time(id):
+            await db.set_first_time_status(id, False)
+        if not await db.is_paused(id):
             if not scheduler.get_job('unmatch_%s' % id):
-              scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=new_date, args=(id, state, first_name, last_name, ), id='unmatch_%s' % id)
+              scheduler.add_job(set_state_one_day_to_unmatch, 'date', run_date=datetime.datetime.now() + datetime.timedelta(minutes=10), args=(id, state, first_name, last_name, ), id='unmatch_%s' % id)
               logger.warning('[%s@%s_%s] add job one_day_to_unmatch [premium, has match, not paused]' % (id, first_name, last_name))
         # SHOW HAS MATCH STATUS
             logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu]' % (id, first_name, last_name))
@@ -432,37 +428,37 @@ async def schedule_jobs(id: int, state: FSMContext, first_name ='', last_name=''
       # IF THERE IS NO MATCH REPEAT AFTER 10 MINUTES
       # SHOW UNMATCH
       else:
-        await state.reset_state()
-        if not await db.is_paused(id, conn):
+        #await state.reset_state()
+        if not await db.is_paused(id):
           if need_edit:
             if not scheduler.get_job('check_%s' % id):
                 scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=1), args=(id, state, first_name, last_name, False, None, False, ), id= 'check_%s' % id)
-                logger.warning('[%s@%s_%s] add job schedule_jobs [premium, no match, not paused, need_edit]' % (id, first_name, last_name))
+                #logger.warning('[%s@%s_%s] add job schedule_jobs [premium, no match, not paused, need_edit]' % (id, first_name, last_name))
             if show_menu:
-                logger.info('[%s@%s_%s] показать меню при паузе в поиске партнера' % (id, first_name, last_name))
+                #logger.info('[%s@%s_%s] показать меню при паузе в поиске партнера' % (id, first_name, last_name))
                 await show_unpaused_no_match_menu(id, first_name, last_name, True, query)
           else:
             if not scheduler.get_job('check_%s' % id):
                 scheduler.add_job(schedule_jobs, 'date', run_date=datetime.datetime.now()+datetime.timedelta(minutes=1), args=(id, state, first_name, last_name, False, None, False, ), id= 'check_%s' % id)
-                logger.warning('[%s@%s_%s] add job schedule_jobs [premium, no match, not paused, not need edit]' % (id, first_name, last_name))
+                #logger.warning('[%s@%s_%s] add job schedule_jobs [premium, no match, not paused, not need edit]' % (id, first_name, last_name))
             # if we need to show menu
             if show_menu:
-                logger.info('[%s@%s_%s] показать меню при поиске партнера' % (id, first_name, last_name))
+                #logger.info('[%s@%s_%s] показать меню при поиске партнера' % (id, first_name, last_name))
                 await show_unpaused_no_match_menu(id, first_name, last_name)
         else:
           if need_edit:
             if scheduler.get_job('check_%s' % id, 'default'):
                 scheduler.remove_job(job_id='check_%s' % id, jobstore='default')
-                logger.warning('[%s@%s_%s] remove job schedule_jobs [premium, no match, paused, need edit]' % (id, first_name, last_name))
+                #logger.warning('[%s@%s_%s] remove job schedule_jobs [premium, no match, paused, need edit]' % (id, first_name, last_name))
             if show_menu:
-                logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu]' % (id, first_name, last_name))
+                #logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu]' % (id, first_name, last_name))
                 await show_paused_menu(id, first_name, last_name, True, query)
           else:
             if scheduler.get_job('check_%s' % id):
                 scheduler.remove_job(job_id='check_%s' % id, jobstore='default')
-                logger.warning('[%s@%s_%s] remove job schedule_jobs [premium, no mathc, paused, not need edit]' % (id, first_name, last_name))
+                #logger.warning('[%s@%s_%s] remove job schedule_jobs [premium, no mathc, paused, not need edit]' % (id, first_name, last_name))
             if show_menu:
-                logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu]' % (id, first_name, last_name))
+                #logger.warning('[%s@%s_%s] remove job schedule_jobs [show menu]' % (id, first_name, last_name))
                 await show_paused_menu(id, first_name, last_name)
 
 # BOT MESSAGES MECHANICS
@@ -473,25 +469,26 @@ async def schedule_jobs(id: int, state: FSMContext, first_name ='', last_name=''
 # WELCOME MESSAGE AND CHOICE GO TO REGISTRATION OR READ ABOUT PROJECT
 @dp.message_handler(commands='start')
 async def start(message: types.Message, state: FSMContext):
-    r'''
+    r''', conn
     Connecting to database and schedule jobs
     '''
+    st = state.get_state()
     global logger
     try:
         os.remove(Path(r'logs/%s.log' % message.from_user.id))
-    except(FileNotFoundError):
+    except:
         logger.warning('[%s@%s_%s] файл логов не найден. Создан новый файл' % (id, message.from_user.first_name, message.from_user.last_name))
-    logger = app_logger.get_logger(__name__, message.from_user.id)
+    logger = app_logger.get_logger(__name__)
     logger.info('[%s@%s_%s] Подключился к боту' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await state.reset_state()
-    global conn
-    conn = await asyncpg.connect('postgresql://%s:%s@%s/bot_db' % (DB_USER, DB_PASSWORD, DB_ADRESS))
     logger.info('[%s@%s_%s] Подключился к базе данных' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await db.table_ini(conn)
-    await db.create_new_user(message.from_user.id, conn)
-    await db.set_algorithm_steps(message.from_user.id, conn, 30)
-    await db.set_likes(message.from_user.id, conn, 7)
-    await db.set_superlikes(message.from_user.id, conn, 5)
+    await db.table_ini()
+    await db.create_new_user(message.from_user.id)
+    await db.set_subscription_begin_date(message.from_user.id, datetime.date.today() + datetime.timedelta(days=10))
+    await db.set_subscription_end_date(message.from_user.id, datetime.date.today() + datetime.timedelta(days=10))
+    await db.set_algorithm_steps(message.from_user.id, 30)
+    await db.set_likes(message.from_user.id, 7)
+    await db.set_superlikes(message.from_user.id, 5)
     logger.info('[%s@%s_%s] Переведен на Начальное меню' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await show_starting_menu(message.from_user.id, message.from_user.first_name, message.from_user.last_name)
     #await schedule_jobs(message.from_user.id, state=state)
@@ -503,7 +500,7 @@ async def show_unpaused_no_match_menu(id: int, first_name: str, last_name: str, 
     if edit = True - menu will edit message will be in query argument(MUST BE types.CallbackQuery)
     '''
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    if await db.is_subscribed(id, conn):
+    if await db.is_subscribed(id):
         subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscription')
     else:
         subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscriptions')
@@ -527,7 +524,7 @@ async def show_paused_menu(id: int, first_name: str, last_name: str, edit=False,
     if edit = True - menu will edit message will be in query argument(MUST BE types.CallbackQuery)
     '''
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    if await db.is_subscribed(id, conn):
+    if await db.is_subscribed(id):
         subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscription')
     else:
         subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscriptions')
@@ -753,7 +750,7 @@ async def set_profile_name(message: types.Message, state: FSMContext):
             await message.reply(texts.NAME)
             logger.warning('[%s@%s_%s] введенное имя не подходит' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             return 
-        await db.set_name(message.from_user.id, conn, message.text) # set the profile name 
+        await db.set_name(message.from_user.id, message.text) # set the profile name 
         logger.warning('[%s@%s_%s] введенное имя [%s] заносится в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.text))
         #------------------------------------------------------------------------------
         # ---------------------POST request for some STATISTICS------------------------
@@ -794,7 +791,7 @@ async def set_profile_name(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(text='male')
 async def show_male_menu(query: types.CallbackQuery, state: FSMContext):
     logger.info('[%s@%s_%s] пол внесен в БД' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_gender(query.from_user.id, conn, buttons_texts.GENDER_MALE[1])
+    await db.set_gender(query.from_user.id, buttons_texts.GENDER_MALE[1])
     logger.warning('[%s@%s_%s] пол [Мужской] внесен в БД' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     #-------------------------------------------------------------------------------
     #--------------------------POST request for STATISTIC---------------------------
@@ -840,7 +837,7 @@ async def check_date(message: types.Message, state:FSMContext):
     logger.warning('[%s@%s_%s] FSM birthday state OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     date = datetime.datetime.strptime(message.text, "%d.%m.%Y").date()
     logger.info('[%s@%s_%s] Конвертирование даты для записи в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await db.set_birthday(message.from_user.id, conn, date)
+    await db.set_birthday(message.from_user.id, date)
     logger.warning('[%s@%s_%s] запись даты рождения [%s] в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, date))
     #------------------------------------------------------------------------------
     #-------------------POST request for some STATISTICS---------------------------
@@ -877,7 +874,7 @@ async def check_date(message: types.Message, state:FSMContext):
 @dp.callback_query_handler(text='female')
 async def show_female_menu(query: types.CallbackQuery, state: FSMContext):
     logger.info('[%s@%s_%s] пол внесен в БД' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_gender(query.from_user.id, conn,  buttons_texts.GENDER_FEMALE[1])
+    await db.set_gender(query.from_user.id,  buttons_texts.GENDER_FEMALE[1])
     logger.warning('[%s@%s_%s] пол [Женский] внесен в БД' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     #------------------------------------------------------------------------------
     #--------------------------POST request for STATISTIC--------------------------
@@ -922,7 +919,7 @@ async def check_date(message: types.Message, state:FSMContext):
     logger.warning('[%s@%s_%s] FSM birthday state OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     date = datetime.datetime.strptime(message.text, "%d.%m.%Y").date()
     logger.info('[%s@%s_%s] Конвертирование даты и запись в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await db.set_birthday(message.from_user.id, conn, date)
+    await db.set_birthday(message.from_user.id, date)
     logger.warning('[%s@%s_%s] запись даты рождения [%s] в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, date))
     #------------------------------------------------------------------------------
     #-------------------POST request for some STATISTICS---------------------------
@@ -1117,7 +1114,7 @@ async def show_under_construction(query: types.CallbackQuery, state: FSMContext)
 @dp.callback_query_handler(text='moscow')
 async def add_moscow(query: types.CallbackQuery, state: FSMContext):
     logger.info('[%s@%s_%s] выбрал город Москва ' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_city(query.from_user.id, conn, texts.MOSCOW)
+    await db.set_city(query.from_user.id, texts.MOSCOW)
     logger.warning('[%s@%s_%s] занес информацию о городе в БД [Москва]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     # -----------------------------------------------------------------------------
     # --------------------    POST request for some STATISTIC    ------------------
@@ -1153,7 +1150,7 @@ async def add_moscow(query: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='saint-p')
 async def add_saintp(query: types.CallbackQuery, state: FSMContext):
     logger.info('[%s@%s_%s] выбрал город Санкт-Петерубрг' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_city(query.from_user.id, conn, texts.SAINT_PETERSBURG)
+    await db.set_city(query.from_user.id, texts.SAINT_PETERSBURG)
     logger.warning('[%s@%s_%s] занес информацию о городе в БД [Санкт-Петербург]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     #------------------------------------------------------------------------------
     #---------------------    POST request for some STATISTIC    ------------------
@@ -1190,7 +1187,7 @@ async def add_saintp(query: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='samara')
 async def add_samara(query: types.CallbackQuery, state: FSMContext):
     logger.info('[%s@%s_%s] выбрал город Самара' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_city(query.from_user.id, conn, texts.SAMARA)
+    await db.set_city(query.from_user.id, texts.SAMARA)
     logger.warning('[%s@%s_%s] занес информацию о городе в БД [Самара]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     #------------------------------------------------------------------------------
     #---------------------    POST request for some STATISTIC    ------------------
@@ -1227,7 +1224,7 @@ async def add_samara(query: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='nomad')
 async def add_nomad(query: types.CallbackQuery, state= FSMContext):
     logger.info('[%s@%s_%s] выбрал город Кочевник' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_city(query.from_user.id, conn, texts.NOMAD)
+    await db.set_city(query.from_user.id, texts.NOMAD)
     logger.warning('[%s@%s_%s] занес иноформацию о городе в БД [Кочевник]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     #------------------------------------------------------------------------------
     #---------------------    POST request for some STATISTIC    ------------------
@@ -1264,7 +1261,7 @@ async def add_nomad(query: types.CallbackQuery, state= FSMContext):
 @dp.callback_query_handler(text='srsly')
 async def add_reason_srsly(query: types.CallbackQuery, state: FSMContext):
     logger.info('[%s@%s_%s] выбрал причину поиска [Серьезные отношения]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_reason(query.from_user.id, conn, texts.SERIOUS_REL)
+    await db.set_reason(query.from_user.id, texts.SERIOUS_REL)
     logger.warning('[%s@%s_%s] занес причину поиска отношений  в БД [Серьезные отношения]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     #------------------------------------------------------------------------------
     #-------------------------POST request for some STATISTIC----------------------
@@ -1291,7 +1288,7 @@ async def add_reason_srsly(query: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(text='family')
 async def add_reason_family(query: types.CallbackQuery):
     logger.info('[%s@%s_%s] выбрал причину поиска "Создание семьи"' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_reason(query.from_user.id, conn, texts.FAMILY)
+    await db.set_reason(query.from_user.id, texts.FAMILY)
     logger.warning('[%s@%s_%s] занес в БД причину поиска отношений [Создание семьи]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     #------------------------------------------------------------------------------
     #-------------------------POST request for some STATISTIC----------------------
@@ -1319,32 +1316,32 @@ async def add_reason_family(query: types.CallbackQuery):
 @dp.callback_query_handler(text='upload_main_photo')
 async def ad_photo(query: types.CallbackQuery):
     logger.info('[%s@%s_%s] начало загрузки основной фотографии' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    error_flag = await db.get_error_status(query.from_user.id, conn)
+    error_flag = await db.get_error_status(query.from_user.id)
     logger.warning('[%s@%s_%s] получили из бд флаг ошибки [%s]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, error_flag))
     if error_flag:
-        error_flag = await db.set_error_status(query.from_user.id, conn, False)
+        error_flag = await db.set_error_status(query.from_user.id, False)
     await query.message.edit_text(texts.UPLOAD_PHOTO)
     await Form.profile_photo.set()
     logger.warning('[%s@%s_%s] FSM state profile_photo ON' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
 # DOWNLOADING MAIN PHOTO OF PROFILE. BECOURSE WE NEED TO FORWARD IT TO MODERATION CHAT
 @dp.message_handler(state=Form.profile_photo, content_types=types.ContentTypes.ANY)
 async def download_photo(message: types.Message, state: FSMContext):
-    error_status = await db.get_error_status(message.from_user.id, conn)
+    error_status = await db.get_error_status(message.from_user.id)
     logger.warning('[%s@%s_%s] получили из бд флаг ошибки [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, error_status))
     if message.content_type == 'photo':
         if message.media_group_id:
             logger.warning('[%s@%s_%s] загрузка больше 1 фотографии' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             if not error_status:
-                await db.set_error_status(message.from_user.id, conn, True)
+                await db.set_error_status(message.from_user.id, True)
                 await message.answer(text=texts.MEDIA_GROUP_ERROR)
-                await db.set_error_status(message.from_user.id, conn, False)
+                await db.set_error_status(message.from_user.id, False)
                 logger.info('[%s@%s_%s] выведено сообщение об ошибке' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
                 logger.warning('[%s@%s_%s] выведено сообщение об ошибке' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             return
         img = message.photo[-1].file_id
         await message.photo[-1].download(destination_file=Path(r'profiles/%s/profile_photo.jpg' % message.from_user.id))
         logger.warning('[%s@%s_%s] загружена фотография в profiles/%s/profile_photo.jpg' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
-        await db.set_profile_photo(message.from_user.id, conn, img)
+        await db.set_profile_photo(message.from_user.id, img)
         logger.warning('[%s@%s_%s] занес в БД telegram id фотографии профиля' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         await state.reset_state()
         logger.warning('[%s@%s_%s] FSM state profile_photo OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
@@ -1366,7 +1363,7 @@ async def download_photo(message: types.Message, state: FSMContext):
         confirm_button = types.InlineKeyboardButton(buttons_texts.YES, callback_data='confirm_photo')
         again_button = types.InlineKeyboardButton(buttons_texts.NO, callback_data='upload_main_photo')
         keyboard.row(confirm_button, again_button)
-        # await bot.send_photo(message.from_user.id, photo=await db.get_profile_photo(message.from_user.id, conn))
+        # await bot.send_photo(message.from_user.id, photo=await db.get_profile_photo(message.from_user.id))
         await bot.send_message(message.from_user.id, text=texts.CONFIRMING_PHOTO, reply_markup=keyboard)
         logger.info('[%s@%s_%s] вывод меню подтверждения загрузки фотографии профиля' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     else:
@@ -1414,18 +1411,18 @@ async def show_recomendation(query: types.CallbackQuery, state:FSMContext):
 @dp.callback_query_handler(text='show_base_profile')
 async def show_base_profile(message: types.CallbackQuery):
     logger.info('[%s@%s_%s] вывод базового профиля' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' % (texts.FIRST_NAME ,await db.get_name(message.from_user.id, conn),
-                                                              texts.BIRTHDAY, await db.get_birthday(message.from_user.id, conn),
-                                                              texts.GENDER, await db.get_gender(message.from_user.id, conn), \
+    text = '%s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s' % (texts.FIRST_NAME ,await db.get_name(message.from_user.id),
+                                                              texts.BIRTHDAY, await db.get_birthday(message.from_user.id),
+                                                              texts.GENDER, await db.get_gender(message.from_user.id), \
                                                               texts.CITY,
-                                                              await db.get_city(message.from_user.id, conn),
+                                                              await db.get_city(message.from_user.id),
                                                               texts.REASON,
-                                                              await db.get_reason(message.from_user.id, conn))
+                                                              await db.get_reason(message.from_user.id))
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     next_button = types.InlineKeyboardButton(buttons_texts.NEXT_STEP, callback_data='upload_extra_photo')
     reg_button = types.InlineKeyboardButton(buttons_texts.RESTART_REGISTRATION, callback_data='begin')
     keyboard.row(reg_button, next_button)
-    img = await db.get_profile_photo(message.from_user.id, conn)
+    img = await db.get_profile_photo(message.from_user.id)
     logger.warning('[%s@%s_%s] загружен telegram id фотографии профиля' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await bot.send_photo(message.from_user.id, photo=img, caption=text, reply_markup=keyboard)
 
@@ -1434,10 +1431,10 @@ async def show_base_profile(message: types.CallbackQuery):
 @dp.callback_query_handler(text='upload_extra_photo')
 async def upload_three_photo(message: types.Message):
     logger.info('[%s@%s_%s] загрузка фотографий ракурса' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    error_flag = await db.get_error_status(message.from_user.id, conn)
+    error_flag = await db.get_error_status(message.from_user.id)
     logger.warning('[%s@%s_%s] получил флаг ошибки [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, error_flag))
     if error_flag:
-        error_flag = await db.set_error_status(message.from_user.id, conn, False)
+        error_flag = await db.set_error_status(message.from_user.id, False)
     photo = open(Path('pic/3photos.png'), 'rb')
     await bot.send_photo(message.from_user.id, photo)
     await bot.send_message(message.from_user.id, text=texts.EXTRA_PHOTOS)
@@ -1448,21 +1445,21 @@ async def upload_three_photo(message: types.Message):
 async def upload_first_photo(message: types.Message, state: FSMContext):
     if message.content_type == 'photo':
         logger.info('[%s@%s_%s] загрузка первой фотографии ракурсов' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-        error_status = await db.get_error_status(message.from_user.id, conn)
+        error_status = await db.get_error_status(message.from_user.id)
         logger.warning('[%s@%s_%s] получил тег ошибки [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, error_status))
         if message.media_group_id:
             logger.warning('[%s@%s_%s] загрузка больше 1 фотографии' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             if not error_status:
-                await db.set_error_status(message.from_user.id, conn, True)
+                await db.set_error_status(message.from_user.id, True)
                 await message.answer(text=texts.MEDIA_GROUP_ERROR)
-                await db.set_error_status(message.from_user.id, conn, False)
+                await db.set_error_status(message.from_user.id, False)
                 logger.info('[%s@%s_%s] выведено сообщение об ошибке' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
                 logger.warning('[%s@%s_%s] выведено сообщение об ошибке' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             return
         img = message.photo[-1].file_id
         await message.photo[-1].download(destination_file=Path(r'profiles/%s/first_photo.jpg' % message.from_user.id))
         logger.warning('[%s@%s_%s] загрузка фотографии в profiles/%s/first_photo.jpg' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
-        await db.set_1st_extra_photo(message.from_user.id, conn, img)
+        await db.set_1st_extra_photo(message.from_user.id, img)
         logger.warning('[%s@%s_%s] занесение telegram id фотографии в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         #------------------------------------------------------------------------------
         #-------------------------POST request for some STATISTIC----------------------
@@ -1491,19 +1488,19 @@ async def upload_first_photo(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Form.second_side_photo, content_types=types.ContentTypes.ANY)
 async def upload_second_photo(message: types.Message, state: FSMContext):
     if message.content_type == 'photo':
-        error_status = await db.get_error_status(message.from_user.id, conn)
+        error_status = await db.get_error_status(message.from_user.id)
         logger.warning('[%s@%s_%s] получил флаг ошибки [%s] из БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, error_status))
         if message.media_group_id:
             if not error_status:
-                await db.set_error_status(message.from_user.id, conn, True)
+                await db.set_error_status(message.from_user.id, True)
                 await message.answer(text=texts.MEDIA_GROUP_ERROR)
-                await db.set_error_status(message.from_user.id, conn, False)
+                await db.set_error_status(message.from_user.id, False)
                 logger.warning('[%s@%s_%s] попытка отправить не 1 фотографию, а медиа группу' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             return
         img = message.photo[-1].file_id
         await message.photo[-1].download(destination_file=Path(r'profiles/%s/second_photo.jpg' % message.from_user.id))
         logger.warning('[%s@%s_%s] скачан файл в profiles/%s/second_photo.jpg' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
-        await db.set_2nd_extra_photo(message.from_user.id, conn, img)
+        await db.set_2nd_extra_photo(message.from_user.id, img)
         logger.warning('[%s@%s_%s] занесение telegram id фотографии в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         #------------------------------------------------------------------------------
         #-------------------------POST request for some STATISTIC----------------------
@@ -1531,17 +1528,17 @@ async def upload_second_photo(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Form.third_side_photo, content_types=types.ContentTypes.ANY)
 async def upload_third_photo(message: types.Message, state: FSMContext):
     if message.content_type == 'photo':
-        error_status = await db.get_error_status(message.from_user.id, conn)
+        error_status = await db.get_error_status(message.from_user.id)
         if message.media_group_id:
             if not error_status:
-                await db.set_error_status(message.from_user.id, conn, True)
+                await db.set_error_status(message.from_user.id, True)
                 await message.answer(text=texts.MEDIA_GROUP_ERROR)
-                await db.set_error_status(message.from_user.id, conn, False)
+                await db.set_error_status(message.from_user.id, False)
             return
         img = message.photo[-1].file_id
         await message.photo[-1].download(destination_file=Path(r'profiles/%s/third_photo.jpg' % message.from_user.id))
         logger.warning('[%s@%s_%s] скачан файл в profiles/%s/third_photo.jpg' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
-        await db.set_3rd_extra_photo(message.from_user.id, conn, img)
+        await db.set_3rd_extra_photo(message.from_user.id, img)
         logger.warning('[%s@%s_%s] занесение telegram id фотографии в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         #------------------------------------------------------------------------------
         #-------------------------POST request for some STATISTIC----------------------
@@ -1573,13 +1570,13 @@ async def upload_third_photo(message: types.Message, state: FSMContext):
                         b64_first = base64.b64encode(await first.read())
                         b64_second = base64.b64encode(await second.read())
                         b64_third = base64.b64encode(await third.read())
-                        await db.set_b64_profile_photo(message.from_user.id, conn, b64_profile)
+                        await db.set_b64_profile_photo(message.from_user.id, b64_profile)
                         logger.warning('[%s@%s_%s] отправка в БД base64 string фотографии профиля' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-                        await db.set_b64_1st_photo(message.from_user.id, conn, b64_first)
+                        await db.set_b64_1st_photo(message.from_user.id, b64_first)
                         logger.warning('[%s@%s_%s] отправка в БД base64 string первой фотографии ракурса' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-                        await db.set_b64_2nd_photo(message.from_user.id, conn, b64_second)
+                        await db.set_b64_2nd_photo(message.from_user.id, b64_second)
                         logger.warning('[%s@%s_%s] отправка в БД base64 string второй фотографии ракурса' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-                        await db.set_b64_3rd_photo(message.from_user.id, conn, b64_third)
+                        await db.set_b64_3rd_photo(message.from_user.id, b64_third)
                         logger.warning('[%s@%s_%s] отправка в БД base64 string третьей фотографии ракурса' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
                         #-------------------------------------------------------------------------------
                         #--------------    POST request to send profile to moderation    ---------------
@@ -1587,35 +1584,35 @@ async def upload_third_photo(message: types.Message, state: FSMContext):
         #     async with aiofiles.open(Path(r'profiles/%s/first_photo.jpg' % message.from_user.id), 'rb') as first:
         #         async with aiofiles.open(Path(r'profiles/%s/second_photo.jpg' % message.from_user.id), 'rb') as second:
         #             async with aiofiles.open(Path(r'profiles/%s/third_photo.jpg' % message.from_user.id), 'rb') as third:
-        #                 if await db.is_moderated(message.from_user.id, conn):
-        #                     if not await db.is_photo_ok(message.from_user.id, conn) or not await db.is_info_ok(message.from_user.id, conn):
+        #                 if await db.is_moderated(message.from_user.id):
+        #                     if not await db.is_photo_ok(message.from_user.id) or not await db.is_info_ok(message.from_user.id):
         #                         await moderator_bot.send_message(-1001693622168, text=texts.REMODERATION % (message.from_user.id,
-        #                                                         await db.get_name(message.from_user.id, conn),
-        #                                                         await db.get_gender(message.from_user.id, conn),
-        #                                                         await db.get_birthday(message.from_user.id, conn),
-        #                                                         await db.get_city(message.from_user.id, conn),
-        #                                                         await db.get_reason(message.from_user.id, conn)))
+        #                                                         await db.get_name(message.from_user.id),
+        #                                                         await db.get_gender(message.from_user.id),
+        #                                                         await db.get_birthday(message.from_user.id),
+        #                                                         await db.get_city(message.from_user.id),
+        #                                                         await db.get_reason(message.from_user.id)))
         #                   else:
         #                       await moderator_bot.send_message(-1001693622168, text=texts.NEW_MODERATION % (message.from_user.id,
-        #                                                         await db.get_name(message.from_user.id, conn),
-        #                                                         await db.get_gender(message.from_user.id, conn),
-        #                                                         await db.get_birthday(message.from_user.id, conn),
-        #                                                         await db.get_city(message.from_user.id, conn),
-        #                                                         await db.get_reason(message.from_user.id, conn)))
+        #                                                         await db.get_name(message.from_user.id),
+        #                                                         await db.get_gender(message.from_user.id),
+        #                                                         await db.get_birthday(message.from_user.id),
+        #                                                         await db.get_city(message.from_user.id),
+        #                                                         await db.get_reason(message.from_user.id)))
         #                 #-------------------------------------------------------------------------------
         #                 #------   POST request to send profile main photo   ----------------------------
-        #                 img = await db.get_profile_photo(message.from_user.id, conn)
+        #                 img = await db.get_profile_photo(message.from_user.id)
         #                 await moderator_bot.send_photo(-1001693622168, profile, caption=texts.PROFILE_PHOTO)
         #                 #-------------------------------------------------------------------------------
         #                 #-------------------------------------------------------------------------------
         #                 #------------------POST request to upload photos to profile on server-----------
         #                 # async with aiohttp.ClientSession() as session:
         #                 #   async with session.post(url='https://server.unison.dating/user/add_photos/self?user_id=%s' % message.from_user.id, json={
-        #                 #       "main_photo": await db.get_profile_photo(message.from_user.id, conn),#str(b64_profile),
+        #                 #       "main_photo": await db.get_profile_photo(message.from_user.id),#str(b64_profile),
         #                 #       "other_photos": [
-        #                 #         await db.get_1st_extra_photo(message.from_user.id, conn),#str(b64_first),
-        #                 #         await db.get_2nd_extra_photo(message.from_user.id, conn),#str(b64_second),
-        #                 #         await db.get_3rd_extra_photo(message.from_user.id, conn)#str(b64_third)
+        #                 #         await db.get_1st_extra_photo(message.from_user.id),#str(b64_first),
+        #                 #         await db.get_2nd_extra_photo(message.from_user.id),#str(b64_second),
+        #                 #         await db.get_3rd_extra_photo(message.from_user.id)#str(b64_third)
         #                 #       ]
         #                 #   }) as resp: pass#print(await resp.text())
         #                 #---------------------    POST request to send additional photos    ------------
@@ -1681,13 +1678,13 @@ async def upload_third_photo(message: types.Message, state: FSMContext):
 async def show_extra_photos(message: types.Message):
     logger.info('[%s@%s_%s] загрузка первой фотографии ракурсов' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     #1
-    img1 = await db.get_1st_extra_photo(message.from_user.id, conn)
+    img1 = await db.get_1st_extra_photo(message.from_user.id)
     logger.warning('[%s@%s_%s] получение telegram id первой фотографии ракурсов' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     #2
-    img2 = await db.get_2nd_extra_photo(message.from_user.id, conn)
+    img2 = await db.get_2nd_extra_photo(message.from_user.id)
     logger.warning('[%s@%s_%s] загрузка telegram id второй фотографии ракурсов' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     #3
-    img3 = await db.get_3rd_extra_photo(message.from_user.id, conn)
+    img3 = await db.get_3rd_extra_photo(message.from_user.id)
     logger.warning('[%s@%s_%s] загрузка telegram id третьей фотографии ракурсов' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     mediagroup = types.MediaGroup()
     mediagroup.attach_photo(img1)
@@ -1724,7 +1721,7 @@ async def show_rules_of_studing(query: types.CallbackQuery):
 async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s'%query.from_user.id, json={
-    #       "next_id": await db.get_algorithm_steps(query.from_user.id, conn) - 30
+    #       "next_id": await db.get_algorithm_steps(query.from_user.id) - 30
     #   }) as resp: pass #print (await resp.text())
     #---------------------------------------------------------------------------------------
     #------------------------------POST request for some STATISTICS-------------------------
@@ -1742,11 +1739,11 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
     #---------------------------------------------------------------------------------------
     unlike_button = types.InlineKeyboardButton(buttons_texts.UNLIKE, callback_data='unlike_educate_algorithm')
     inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
-    steps = await db.get_algorithm_steps(query.from_user.id, conn)
+    steps = await db.get_algorithm_steps(query.from_user.id)
     logger.warning('[%s@%s_%s] получил количество шагов [%s] из БД' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, steps))
-    likes = await db.get_likes(query.from_user.id, conn)
+    likes = await db.get_likes(query.from_user.id)
     logger.warning('[%s@%s_%s] получил количество лайков [%s]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, likes))
-    super_likes = await  db.get_super_likes(query.from_user.id, conn)
+    super_likes = await  db.get_super_likes(query.from_user.id)
     logger.warning('[%s@%s_%s] получил количество суперлайков [%s]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, super_likes))
     super_like_button = types.InlineKeyboardButton(buttons_texts.SUPER_LIKE, callback_data='superlike_educate_algorithm')
     likes_button = types.InlineKeyboardButton(buttons_texts.LIKE, callback_data='like_educate_algorithm')
@@ -1787,14 +1784,14 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
     #     ]
     #   }) as resp: pass #print(await resp.text())
     # ______________________________________________________________________________________
-    await db.set_algorithm_steps(query.from_user.id, conn, await db.get_algorithm_steps(query.from_user.id, conn)-1)
+    await db.set_algorithm_steps(query.from_user.id, await db.get_algorithm_steps(query.from_user.id)-1)
     logger.warning('[%s@%s_%s] уменьшение количества шагов на 1' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
-    steps = await db.get_algorithm_steps(query.from_user.id, conn)
+    steps = await db.get_algorithm_steps(query.from_user.id)
     logger.warning('[%s@%s_%s] получил количество шагов [%s]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, steps))
-    likes = await db.get_likes(query.from_user.id, conn)
+    likes = await db.get_likes(query.from_user.id)
     logger.warning('[%s@%s_%s] получил количество лайков [%s]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, likes))
-    super_likes = await  db.get_super_likes(query.from_user.id, conn)
+    super_likes = await  db.get_super_likes(query.from_user.id)
     logger.warning('[%s@%s_%s] получил количество суперлайков [%s]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, super_likes))
     if steps > 1:
         if  likes > 0:
@@ -1864,7 +1861,7 @@ async def alogrithm_education(query: types.CallbackQuery, state: FSMContext):
     await query.answer(text=buttons_texts.ANSWER_STUDY % (31-steps, likes, super_likes), show_alert=True)
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-    #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
+    #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id),
     #     "answer": {
     #       30-steps: "0"
     #     }
@@ -1894,12 +1891,12 @@ async def second_algorithm_education(query: types.CallbackQuery, state: FSMConte
     #     ]
     #   }) as resp: pass #print(await resp.text())
     # ______________________________________________________________________________________
-    await db.set_likes(query.from_user.id, conn, await db.get_likes(query.from_user.id, conn)-1)
-    await db.set_algorithm_steps(query.from_user.id, conn, await db.get_algorithm_steps(query.from_user.id, conn)-1)
+    await db.set_likes(query.from_user.id, await db.get_likes(query.from_user.id)-1)
+    await db.set_algorithm_steps(query.from_user.id, await db.get_algorithm_steps(query.from_user.id)-1)
     inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
-    steps = await db.get_algorithm_steps(query.from_user.id, conn)
-    likes = await db.get_likes(query.from_user.id, conn)
-    super_likes = await  db.get_super_likes(query.from_user.id, conn)
+    steps = await db.get_algorithm_steps(query.from_user.id)
+    likes = await db.get_likes(query.from_user.id)
+    super_likes = await  db.get_super_likes(query.from_user.id)
     if steps > 1:
         if  likes > 0:
             if super_likes > 0:
@@ -1970,7 +1967,7 @@ async def second_algorithm_education(query: types.CallbackQuery, state: FSMConte
     #--------------------------------------------------POST request to GET PHOTO and MAKING DATASET--------------------------------------------------------
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-    #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
+    #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id),
     #     "answer": {
     #       30-steps: "1"
     #     }
@@ -2003,12 +2000,12 @@ async def third_algorithm_education(query: types.CallbackQuery, state: FSMContex
     #   }) as resp: pass #print(await resp.text())
     #---------------------------------------------------------------------------------------
     #---------------------------------------------------------------------------------------
-    await db.set_superlikes(query.from_user.id, conn, await db.get_super_likes(query.from_user.id, conn)-1)
-    await db.set_algorithm_steps(query.from_user.id, conn, await db.get_algorithm_steps(query.from_user.id, conn)-1)
+    await db.set_superlikes(query.from_user.id, await db.get_super_likes(query.from_user.id)-1)
+    await db.set_algorithm_steps(query.from_user.id, await db.get_algorithm_steps(query.from_user.id)-1)
     inline_keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
-    steps = await db.get_algorithm_steps(query.from_user.id, conn)
-    likes = await db.get_likes(query.from_user.id, conn)
-    super_likes = await  db.get_super_likes(query.from_user.id, conn)
+    steps = await db.get_algorithm_steps(query.from_user.id)
+    likes = await db.get_likes(query.from_user.id)
+    super_likes = await  db.get_super_likes(query.from_user.id)
     if steps > 1:
         if  likes > 0:
             if super_likes > 0:
@@ -2079,9 +2076,9 @@ async def third_algorithm_education(query: types.CallbackQuery, state: FSMContex
     # ----------------------------------------------   POST request to GET PHOTO and MAKING DATASET   -----------------------------------------------------
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/init?user_id=%s' % query.from_user.id, json={
-    #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id, conn),
+    #     "next_id": 31-await db.get_algorithm_steps(query.from_user.id),
     #     "answer": {
-    #       30-await db.get_algorithm_steps(query.from_user.id, conn): "2"
+    #       30-await db.get_algorithm_steps(query.from_user.id): "2"
     #     }
     #   }) as resp: 
     #        request = json.loads(await resp.text())
@@ -2204,22 +2201,22 @@ async def upload_extra(query: types.CallbackQuery):
 async def extra_photo_1(message: types.Message, state: FSMContext):
     if message.content_type == 'photo':
         logger.info('[%s@%s_%s] загрузка первой фотографии бывших' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-        error_status = await db.get_error_status(message.from_user.id, conn)
+        error_status = await db.get_error_status(message.from_user.id)
         logger.warning('[%s@%s_%s] получение статуса ошибки [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, error_status))
         if error_status:
-            await db.set_error_status(message.from_user.id, conn, False)
+            await db.set_error_status(message.from_user.id, False)
         if message.media_group_id:
             if not error_status:
-                await db.set_error_status(message.from_user.id, conn, True)
+                await db.set_error_status(message.from_user.id, True)
                 await message.answer(text=texts.MEDIA_GROUP_ERROR)
-                await db.set_error_status(message.from_user.id, conn, False)
+                await db.set_error_status(message.from_user.id, False)
                 logger.warning('[%s@%s_%s] попытка отправить не 1 фотографию, а медиа группу' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             return
         await message.photo[-1].download(destination_file=Path(r'profiles/%s/first_ex_photo.jpg' % message.from_user.id))
         logger.warning('[%s@%s_%s] скачивание фотографии в profiles/%s/first_ex_photo' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
         async with aiofiles.open(Path(r'profiles/%s/first_ex_photo.jpg' % message.from_user.id), 'rb') as photo:
             b64_str = base64.b64encode(await photo.read())
-            await db.set_b64_likes_photo_1(message.from_user.id, conn, b64_str)
+            await db.set_b64_likes_photo_1(message.from_user.id, b64_str)
             logger.warning('[%s@%s_%s] загрузка первой фотографии в формате base64 string в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         try:
             os.remove(Path(r'profiles/%s/first_ex_photo.jpg' % message.from_user.id))
@@ -2254,13 +2251,13 @@ async def second_extra(message: types.Message, state: FSMContext):
 async def extra_photo_second(message: types.Message, state: FSMContext):
     if message.content_type == 'photo':
         logger.info('[%s@%s_%s] загрузка второй фотографии бывших' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-        error_status = await db.get_error_status(message.from_user.id, conn)
+        error_status = await db.get_error_status(message.from_user.id)
         logger.warning('[%s@%s_%s] получение статуса ошибки [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, error_status))
         if message.media_group_id:
             if not error_status:
-                await db.set_error_status(message.from_user.id, conn, True)
+                await db.set_error_status(message.from_user.id, True)
                 await message.answer(text=texts.MEDIA_GROUP_ERROR)
-                await db.set_error_status(message.from_user.id, conn, False)
+                await db.set_error_status(message.from_user.id, False)
                 logger.warning('[%s@%s_%s] попытка отправить не 1 фотографию, а медиа группу' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             return
         img = message.photo[-1].file_id
@@ -2268,7 +2265,7 @@ async def extra_photo_second(message: types.Message, state: FSMContext):
         logger.warning('[%s@%s_%s] скачивание фотографии в profiles/%s/second_ex_photo' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
         async with aiofiles.open(Path(r'profiles/%s/second_ex_photo.jpg' % message.from_user.id), 'rb') as photo:
             b64_str = base64.b64encode(await photo.read())
-            await db.set_b64_likes_photo_2(message.from_user.id, conn, b64_str)
+            await db.set_b64_likes_photo_2(message.from_user.id, b64_str)
             logger.warning('[%s@%s_%s] загрузка второй фотографии в формате base64 string в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         try:
             os.remove(Path(r'profiles/%s/second_ex_photo.jpg' % message.from_user.id))
@@ -2303,13 +2300,13 @@ async def third_extra(message: types.Message, state: FSMContext):
 async def extra_photo_third(message: types.Message, state: FSMContext):
     if message.content_type == 'photo':
         logger.info('[%s@%s_%s] загрузка третьей фотографии бывших' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-        error_status = await db.get_error_status(message.from_user.id, conn)
+        error_status = await db.get_error_status(message.from_user.id)
         logger.warning('[%s@%s_%s] получение статуса ошибки [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, error_status))
         if message.media_group_id:
             if not error_status:
-                await db.set_error_status(message.from_user.id, conn, True)
+                await db.set_error_status(message.from_user.id, True)
                 await message.answer(text=texts.MEDIA_GROUP_ERROR)
-                await db.set_error_status(message.from_user.id, conn, False)
+                await db.set_error_status(message.from_user.id, False)
                 logger.warning('[%s@%s_%s] попытка отправить не 1 фотографию, а медиа группу' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             return
         await message.photo[-1].download(destination_file=Path(r'profiles/%s/third_ex_photo.jpg' % message.from_user.id))
@@ -2317,7 +2314,7 @@ async def extra_photo_third(message: types.Message, state: FSMContext):
         try:
             async with aiofiles.open(Path(r'profiles/%s/third_ex_photo.jpg' % message.from_user.id), 'rb') as photo:
                 b64_str = base64.b64encode(await photo.read())
-                await db.set_b64_likes_photo_3(message.from_user.id, conn, b64_str)
+                await db.set_b64_likes_photo_3(message.from_user.id, b64_str)
                 logger.warning('[%s@%s_%s] загрузка третьей фотографии в формате base64 string в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         except:
             logger.warning('[%s@%s_%s] ошибка во время открытия third_ex_photo.jpg.' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
@@ -2370,35 +2367,35 @@ async def show_recomendation(query: types.CallbackQuery, state:FSMContext):
 #|                               WAITING FOR MATCH                                                                                                                            |
 #L____________________________________________________________________________________________________________________________________________________________________________l
 # IF sheduler set state no_match as active 
-# @dp.message_handler(state=Form.no_match)
-# async def messaging_start(message: types.Message, state: FSMContext):
-#     await state.reset_state(with_data=False)
-#     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-#     if await db.is_subscribed(message.from_user.id, conn):
-#         subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscription')
-#     else:
-#         subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscriptions')
-#     write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
-#     were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
-#     if not await db.is_paused(message.from_user.id, conn): 
-#       pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
-#     else:
-#       pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
-#     keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
-#     if not await db.is_matching(message.from_user.id, conn):
-#       await Form.no_match.set()
-#     else:
-#       await Form.has_match.set()
-#     if not await db.is_paused(message.from_user.id, conn):
-#       await bot.send_message(message.from_user.id, text=texts.MAIN_MENU, reply_markup=keyboard)
-#     else:
-#       await bot.send_message(message.from_user.id, text=texts.PAUSE_MAIN_MENU, reply_markup=keyboard)
+@dp.message_handler(state=Form.no_match)
+async def messaging_start(message: types.Message, state: FSMContext):
+    await state.reset_state(with_data=False)
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    if await db.is_subscribed(message.from_user.id):
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='have_subscription')
+    else:
+        subscribes_button = types.InlineKeyboardButton(text=buttons_texts.SUBSC_BUTTON, callback_data='doesnt_have_subscriptions')
+    write_help = types.InlineKeyboardButton(text=buttons_texts.HELP_BUTTON, callback_data='help')
+    were_in_telegram_button = types.InlineKeyboardButton(text=buttons_texts.TELEGRAM_BUTTON, callback_data='our_telegram')
+    if not await db.is_paused(message.from_user.id): 
+      pause_button = types.InlineKeyboardButton(text=buttons_texts.PAUSE, callback_data='paused_main_menu')
+    else:
+      pause_button = types.InlineKeyboardButton(text=buttons_texts.UNPAUSE, callback_data='unpaused_main_menu')
+    keyboard.add(subscribes_button, write_help, were_in_telegram_button, pause_button)
+    if not await db.is_matching(message.from_user.id):
+      await Form.no_match.set()
+    else:
+      await Form.has_match.set()
+    if not await db.is_paused(message.from_user.id):
+      await bot.send_message(message.from_user.id, text=texts.MAIN_MENU, reply_markup=keyboard)
+    else:
+      await bot.send_message(message.from_user.id, text=texts.PAUSE_MAIN_MENU, reply_markup=keyboard)
 
 @dp.message_handler(content_types=types.ContentTypes.ANY, state=Form.no_match)
 async def message_reaction_if_text(message: types.Message):
     if message.content_type == 'text':
-        if message.text == buttons_texts.MAIN_MENU and not await db.is_matching(message.from_user.id, conn):
-          if await db.is_paused(message.from_user.id, conn):
+        if message.text == buttons_texts.MAIN_MENU and not await db.is_matching(message.from_user.id):
+          if await db.is_paused(message.from_user.id):
               await show_paused_menu(message.from_user.id, message.from_user.first_name, message.from_user.last_name)
               logger.info('[%s@%s_%s] отображение меню паузы в поиске мэтча' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
           else:
@@ -2407,7 +2404,7 @@ async def message_reaction_if_text(message: types.Message):
 
 @dp.callback_query_handler(text='main_menu')
 async def messaging_start(query: types.CallbackQuery, state: FSMContext):
-    if not await db.is_paused(query.from_user.id, conn):
+    if not await db.is_paused(query.from_user.id):
       await show_unpaused_no_match_menu(query.from_user.id, query.from_user.first_name, query.from_user.last_name, edit=True, query=query)
       logger.info('[%s@%s_%s] отображение меню паузы в поиске мэтча' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     else:
@@ -2476,11 +2473,9 @@ async def pay_subscribe(query: types.CallbackQuery):
     #     "amount": "870"
     #   }) as resp:
     #     payment = json.loads(await resp.text())
-    #     await db.set_payment_url(query.from_user.id, conn, payment['url'])
+    #     await db.set_payment_url(query.from_user.id, payment['url'])
     #--------------------------------------------------------------------------------------   
-    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    main_menu_button = types.InlineKeyboardButton(text=buttons_texts.BACK_TO_THE_MENU, callback_data='main_menu')
-    keyboard.add(main_menu_button)
+    
     #--------------------------------------------------------------------------------------
     #----------------------POST request for some statistics--------------------------------
     # async with aiohttp.ClientSession() as session:
@@ -2494,12 +2489,39 @@ async def pay_subscribe(query: types.CallbackQuery):
     #     ]
     #   }) as resp: pass
     #______________________________________________________________________________________
-    await query.message.edit_text(texts.PAY_URL % await db.get_payment_url(query.from_user.id, conn), reply_markup=keyboard)
+    await bot.send_invoice(
+        query.from_user.id,
+        title=buttons_texts.GET_SUBSC,
+        description=texts.SUBSCRIBE_INFO,
+        provider_token=PAY_TOKEN,
+        currency='rub',
+        photo_url='https://cdn.pixabay.com/photo/2017/06/10/06/41/credit-2389154_960_720.png',
+        photo_height=360,
+        photo_width=360,
+        photo_size=360,
+        prices=PRICES,
+        start_parameter='one-month-subscription',
+        payload='test-invoice-payload'
+    )
+
+
+@dp.pre_checkout_query_handler(lambda query: True)
+async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
+    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True, error_message=texts.PAYMENT_FAIL)
+
+@dp.message_handler(content_types=types.ContentType.SUCCESSFUL_PAYMENT)
+async def successful_payment(message: types.Message):
+    today = datetime.date.today()
+    end_date = datetime.date.today()+relativedelta(months=1)
+    await db.set_subscription_begin_date(message.from_user.id, today)
+    await db.set_subscription_end_date(message.from_user.id, end_date)
+
 
 @dp.callback_query_handler(text='deny_subscribtion')
 async def abbandon_subscribe(query: types.CallbackQuery):
     logger.info('[%s@%s_%s] отказаться от подписки' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_subscribtion_status(query.from_user.id, conn, False)
+    new_date = datetime.date.today() - datetime.timedelta(days=1)
+    await db.set_subscription_end_date(query.from_user.id, new_date)
     logger.warning('[%s@%s_%s] отправил статус подписки [%s] ' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, False))
     #--------------------------------------------------------------------------------------
     #----------------------POST request for some statistics--------------------------------
@@ -2529,7 +2551,7 @@ async def abbandon_subscribe(query: types.CallbackQuery):
 @dp.callback_query_handler(text='help')
 async def get_help(query: types.CallbackQuery, state: FSMContext):
   logger.info('[%s@%s_%s] обратится за помощью' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-  await db.set_help_status(query.from_user.id, conn, True)
+  await db.set_help_status(query.from_user.id, True)
   logger.warning('[%s@%s_%s] отправил статус обратился за помощью [%s] ' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, True))
   await state.reset_state()
   #-------------------------------------------------------------------------
@@ -2556,12 +2578,12 @@ async def help_message(message: types.Message, state: FSMContext):
           async with session.post(url='https://api.telegram.org/bot1966031082:AAFW5vy3QAbE46alW4dx8Zf_sDouLkJ3MFY/sendMessage', json={
             "chat_id": "-776565232",
             "text": texts.HELP_MESSAGE % (message.from_user.id, 
-                                          await db.get_name(message.from_user.id, conn), 
+                                          await db.get_name(message.from_user.id), 
                                           message.text, 
                                           '[Profile ](tg://user?id=%s)' % message.from_user.id)
           }) as resp: pass
         # ________________________________________________________________________
-        await db.set_help_status(message.from_user.id, conn, False)
+        await db.set_help_status(message.from_user.id, False)
         logger.warning('[%s@%s_%s] отправил статус обратился за помощью [%s] ' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, True))
         await state.reset_state()
         logger.warning('[%s@%s_%s] FSM state help OFF ' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
@@ -2609,7 +2631,7 @@ async def request_when_tg_pressed(message: types.Message):
 # Main menu when user pause finding his match
 @dp.callback_query_handler(text='paused_main_menu')
 async def pause_menu(query: types.CallbackQuery, state: FSMContext):
-  await db.set_matching_pause_status(query.from_user.id, conn, True)
+  await db.set_matching_pause_status(query.from_user.id, True)
   logger.warning('[%s@%s_%s] отправить значение паузы [%s] в БД' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, True))
   #-------------------------------------------------------------------------
   #---------------------POST request for STATISTIC--------------------------
@@ -2635,7 +2657,7 @@ async def pause_menu(query: types.CallbackQuery, state: FSMContext):
 # Main menu when user in proces of finding his match
 @dp.callback_query_handler(text='unpaused_main_menu')
 async def messaging_start(query: types.CallbackQuery, state: FSMContext):
-    await db.set_matching_pause_status(query.from_user.id, conn, False)
+    await db.set_matching_pause_status(query.from_user.id, False)
     logger.warning('[%s@%s_%s] отправить значение паузы [%s] в БД' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name, False))
     #-------------------------------------------------------------------------
     #---------------------POST request for STATISTIC--------------------------
@@ -2663,65 +2685,63 @@ async def messaging_start(query: types.CallbackQuery, state: FSMContext):
 # |**************************************************************************************************************************************************************************|
 # L__________________________________________________________________________________________________________________________________________________________________________l
 # FORCE HAS_MATCH
-@dp.message_handler(commands = 'has_match')
-async def start_communicating(message: types.Message, state: FSMContext):
-    logger.info('[%s@%s_%s] принудительный запуск состояние has_match' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await Form.has_match.set()
-    logger.warning('[%s@%s_%s] FSM state has_match ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    global conn
-    conn = await asyncpg.connect('postgresql://%s:%s@%s/bot_db' % (DB_USER, DB_PASSWORD, DB_ADRESS))
-    # await db.set_first_time_status(message.from_user.id, conn, True)
-    await bot.send_message(message.from_user.id, text=texts.NEW_MATCH)
-    logger.info('[%s@%s_%s] запуск сообщения о том что найден новый мэтч' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    #--------------------------------------------------------------------------------------
-    #--------------POST reuqest to get photo of match--------------------------------------
-    match_id = await db.get_match_id(message.from_user.id, conn)
-    logger.warning('[%s@%s_%s] получл match_id [%s] из БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, match_id))
-    b64_str = await db.get_b64_profile_photo(match_id, conn)
-    logger.warning('[%s@%s_%s] получл фотографию в формате base64 из БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    try:
-        async with aiofiles.open(Path(r'profiles/%s/match_photo.jpg' % message.from_user.id), 'wb') as match_photo:
-            await match_photo.write(base64.b64decode(b64_str[1:]))
-            logger.warning('[%s@%s_%s] раскодировал фотографию из base64 и сохранил в profiles/%s/match_photo.jpg' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
-    except:
-        logger.warning('[%s@%s_%s] ошибка во время открытия match_photo.jpg и записи в него строки base64.' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-        await bot.send_message(id, text=texts.SMTHNG_GOES_WRONG)
-  #--------------------------------------------------------------------------------------
-    try:
-        async with aiofiles.open(Path(r'./pic/find_match.png'), 'rb') as img:
-            await bot.send_photo(message.from_user.id, photo=img)
-    except:
-        logger.warning('[%s@%s_%s] не смог открыть find_match.png' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    wanna_meet_button = types.KeyboardButton(text=buttons_texts.WANNA_MEET)
-    send_photo_button = types.KeyboardButton(text=buttons_texts.SEND_PHOTO)
-    send_request = types.InlineKeyboardButton(text=buttons_texts.SEND_REQUEST)
-    end_dialog = types.InlineKeyboardButton(text=buttons_texts.END_DIALOG)
-    keyboard.row(wanna_meet_button, send_photo_button)
-    keyboard.row(send_request, end_dialog)
-    try:
-      async with aiofiles.open(Path(r'profiles/%s/match_photo.jpg' % message.from_user.id), 'rb') as match_photo:
-            await bot.send_photo(message.from_user.id, photo=match_photo, caption=texts.MATCH_INFO % (await db.get_name(match_id, conn), await db.get_city(match_id, conn), await db.get_reason(match_id, conn)))
-            logger.warning('[%s@%s_%s] открыл фотографию мэтча' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
-            await bot.send_message(message.from_user.id, text=texts.FIND_MATCH, reply_markup= keyboard)
-            logger.info('[%s@%s_%s] отправил информацию о том что пара найдена' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    except:
-            logger.warning('[%s@%s_%s] ошибка во время открытия match_photo.jpg.' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-            await bot.send_message(id, text=texts.SMTHNG_GOES_WRONG)
+# @dp.message_handler(commands = 'has_match')
+# async def start_communicating(message: types.Message, state: FSMContext):
+#     logger.info('[%s@%s_%s] принудительный запуск состояние has_match' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+#     await Form.has_match.set()
+#     logger.warning('[%s@%s_%s] FSM state has_match ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+#     global conn
+#     conn = await asyncpg.connect('postgresql://%s:%s@%s/bot_db' % (DB_USER, DB_PASSWORD, DB_ADRESS))
+#     # await db.set_first_time_status(message.from_user.id, True)
+#     await bot.send_message(message.from_user.id, text=texts.NEW_MATCH)
+#     logger.info('[%s@%s_%s] запуск сообщения о том что найден новый мэтч' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+#     #--------------------------------------------------------------------------------------
+#     #--------------POST reuqest to get photo of match--------------------------------------
+#     match_id = await db.get_match_id(message.from_user.id)
+#     logger.warning('[%s@%s_%s] получл match_id [%s] из БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, match_id))
+#     b64_str = await db.get_b64_profile_photo(match_id)
+#     logger.warning('[%s@%s_%s] получл фотографию в формате base64 из БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+#     try:
+#         async with aiofiles.open(Path(r'profiles/%s/match_photo.jpg' % message.from_user.id), 'wb') as match_photo:
+#             await match_photo.write(base64.b64decode(b64_str[1:]))
+#             logger.warning('[%s@%s_%s] раскодировал фотографию из base64 и сохранил в profiles/%s/match_photo.jpg' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
+#     except:
+#         logger.warning('[%s@%s_%s] ошибка во время открытия match_photo.jpg и записи в него строки base64.' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+#         await bot.send_message(id, text=texts.SMTHNG_GOES_WRONG)
+#   #--------------------------------------------------------------------------------------
+#     try:
+#         async with aiofiles.open(Path(r'./pic/find_match.png'), 'rb') as img:
+#             await bot.send_photo(message.from_user.id, photo=img)
+#     except:
+#         logger.warning('[%s@%s_%s] не смог открыть find_match.png' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+#     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+#     wanna_meet_button = types.KeyboardButton(text=buttons_texts.WANNA_MEET)
+#     send_photo_button = types.KeyboardButton(text=buttons_texts.SEND_PHOTO)
+#     send_request = types.InlineKeyboardButton(text=buttons_texts.SEND_REQUEST)
+#     end_dialog = types.InlineKeyboardButton(text=buttons_texts.END_DIALOG)
+#     keyboard.row(wanna_meet_button, send_photo_button)
+#     keyboard.row(send_request, end_dialog)
+#     try:
+#       async with aiofiles.open(Path(r'profiles/%s/match_photo.jpg' % message.from_user.id), 'rb') as match_photo:
+#             await bot.send_photo(message.from_user.id, photo=match_photo, caption=texts.MATCH_INFO % (await db.get_name(match_id), await db.get_city(match_id), await db.get_reason(match_id)))
+#             logger.warning('[%s@%s_%s] открыл фотографию мэтча' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
+#             await bot.send_message(message.from_user.id, text=texts.FIND_MATCH, reply_markup= keyboard)
+#             logger.info('[%s@%s_%s] отправил информацию о том что пара найдена' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+#     except:
+#             logger.warning('[%s@%s_%s] ошибка во время открытия match_photo.jpg.' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+#             await bot.send_message(id, text=texts.SMTHNG_GOES_WRONG)
 
 # COMMANDS WHILE COMUNICATION
-@dp.message_handler(state=Form.has_match, content_types=types.ContentTypes.ANY)
+@dp.message_handler(state=Form.has_match, content_types=types.ContentTypes.TEXT)
 async def forwarding_messages(message: types.Message, state: FSMContext):
-    # If user send text
-    if message.content_type == 'text':
         # Sending meeting request
         if message.text == buttons_texts.WANNA_MEET:
-            logger.info('[%s@%s_%s] запуск события "Хочу встретится"' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+            #logger.info('[%s@%s_%s] запуск события "Хочу встретится"' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             # -------------------------------------------------------
             # -----POST request for UNISON THAT USER WANNA MEET------
             # async with aiohttp.ClientSession() as session:
             #   async with session.post(url='https://server.unison.dating/user/wanna_meet?user_id=%s'%data['user_id'], json={
-            #     "match_id": await db.get_match_id(message.from_user.id, conn)
+            #     "match_id": await db.get_match_id(message.from_user.id)
             #   }) as resp: pass
             # -------------------------------------------------------
             # -------------POST request for some STATISTICS----------
@@ -2742,22 +2762,20 @@ async def forwarding_messages(message: types.Message, state: FSMContext):
             deny_button = types.InlineKeyboardButton(text=buttons_texts.NORMAL_NO, callback_data='are_u_deny_meeting')
             keyboard.row(confirm_button, deny_button)
             #sending message to match person
-            match_id = await db.get_match_id(message.from_user.id, conn)
-            match_name = await db.get_name(match_id, conn)
-            await bot.send_message(await db.get_match_id(message.from_user.id, conn), text=texts.COFIRM_MEET % await db.get_name(message.from_user.id, conn), reply_markup=keyboard)
+            await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.COFIRM_MEET % await db.get_name(message.from_user.id), reply_markup=keyboard)
         # Sending photo   
         elif message.text == buttons_texts.SEND_PHOTO:
-            logger.info('[%s@%s_%s] отправка фотографии мэтчу' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+            #logger.info('[%s@%s_%s] отправка фотографии мэтчу' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             await state.reset_state()
-            logger.warning('[%s@%s_%s] FSM state has_match OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
+            #logger.warning('[%s@%s_%s] FSM state has_match OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
             await bot.send_message(message.from_user.id ,text=texts.UPLOAD_PHOTO_TO_MATCH)
             await Form.upload_photo_to_match.set()
-            logger.warning('[%s@%s_%s] FSM state upload_photo_to_match ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
+            #logger.warning('[%s@%s_%s] FSM state upload_photo_to_match ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
         # Ending dialog
         elif message.text == buttons_texts.END_DIALOG:
-            logger.info('[%s@%s_%s] завершение общения' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+            #logger.info('[%s@%s_%s] завершение общения' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             await state.reset_state()
-            logger.warning('[%s@%s_%s] FSM state has_match OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+            #logger.warning('[%s@%s_%s] FSM state has_match OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             #--------------------------------------------------------------------------------------
             #--------------POST reuqest to some STATISTIC--------------------------------------
             # async with aiohttp.ClientSession() as session:
@@ -2776,33 +2794,27 @@ async def forwarding_messages(message: types.Message, state: FSMContext):
             await bot.send_message(message.from_user.id, text=texts.CONFIRMING_LEAVING_CHAT, reply_markup=keyboard)
         # Ask for help or report smthng
         elif message.text == buttons_texts.SEND_REQUEST:
-            logger.info('[%s@%s_%s] обращение к модерации' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+            #logger.info('[%s@%s_%s] обращение к модерации' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             await bot.send_message(message.from_user.id, text=texts.COMUNICATION_HELP)
-            logger.warning('[%s@%s_%s] FSM state has_match OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+            #logger.warning('[%s@%s_%s] FSM state has_match OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             await state.reset_state()
-            logger.warning('[%s@%s_%s] FSM state get_help_message ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+            #logger.warning('[%s@%s_%s] FSM state get_help_message ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
             await Form.get_help_message.set()
         # Send message to ur match
         else:
-            match_id = await db.get_match_id(message.from_user.id, conn)
-            match_name = await db.get_name(match_id, conn)
-            await bot.send_message(match_id, text = '%s пишет: \n%s' % (match_name, message.text))
+            await bot.send_message(await db.get_match_id(message.from_user.id), text = '%s пишет: \n%s' % (await db.get_name(message.from_user.id), message.text))
     # If user try send smthng other than text
-    else:
-      await bot.send_message(message.from_user.id, text=texts.COMMUNICATION_WARNING)
-      logger.info('[%s@%s_%s] попытка отправить что то кроме текста мэтчу' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
+    # else:
+    #   await bot.send_message(message.from_user.id, text=texts.COMMUNICATION_WARNING)
+    #   logger.info('[%s@%s_%s] попытка отправить что то кроме текста мэтчу' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
 
 # IF U RECIVE MEETING MESSAGE AND AGREE TO IT
 @dp.callback_query_handler(text='confirm_meeting', state=Form.has_match)
 async def congirm_meeting_message(message: types.Message, state: FSMContext):
-    await db.set_meeting_status(message.from_user.id, conn, True)
     logger.warning('[%s@%s_%s] отправил значение была ли встреча [True]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
-    match_id = await db.get_match_id(message.from_user.id, conn)
-    logger.warning('[%s@%s_%s] получил значение mathc_id из БД [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id, match_id))
-    user_name = await db.get_name(message.from_user.id, conn)
-    logger.warning('[%s@%s_%s] получил значение name из БД [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id, user_name))
-    match_name = await db.get_name(match_id, conn)
-    logger.warning('[%s@%s_%s] получил значение mathc_name из БД [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id, match_name))
+    logger.warning('[%s@%s_%s] получил значение mathc_id из БД [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id, await db.get_match_id(message.from_user.id)))
+    logger.warning('[%s@%s_%s] получил значение name из БД [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id, await db.get_name(message.from_user.id)))
+    logger.warning('[%s@%s_%s] получил значение mathc_name из БД [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id, await db.get_name(await db.get_match_id(message.from_user.id))))
     # --------POST request for STATISTICS ----------------------------
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://api.amplitude.com/2/httpapi', json={
@@ -2817,7 +2829,7 @@ async def congirm_meeting_message(message: types.Message, state: FSMContext):
     # ----------------------------------------------------------------
     # --------POST request for STATISTICS ----------------------------
     # async with aiohttp.ClientSession() as session:
-    #   async with session.post(url='https://server.unison.dating/user/meet_confirm?user_id=%s' % message.from_user.id, json={ "match_id": await db.get_match_id(message.from_user.id, conn) }) as resp: pass
+    #   async with session.post(url='https://server.unison.dating/user/meet_confirm?user_id=%s' % message.from_user.id, json={ "match_id": await db.get_match_id(message.from_user.id) }) as resp: pass
     # ----------------------------------------------------------------
     # game = random.randint(1, 12)
     # if game == 1:
@@ -2844,10 +2856,10 @@ async def congirm_meeting_message(message: types.Message, state: FSMContext):
     #   await Form.game11.set()
     # elif game == 12:
     #   await Form.game12.set()
-    if await db.get_city(message.from_user.id, conn) == texts.SAINT_PETERSBURG:
-      await bot.send_message(match_id, text=texts.MATCH_AGREE_SPBMSC % user_name)
+    if await db.get_city(message.from_user.id) == texts.SAINT_PETERSBURG:
+      await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.MATCH_AGREE_SPBMSC % await db.get_name(message.from_user.id))
       logger.info('[%s@%s_%s] отправлено сообщение о согласии о свидании' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-      await bot.send_message(message.from_user.id, text=texts.GREETING_MENU_SPB_PLACE % await db.get_name(await db.get_match_id(message.from_user.id, conn), conn))
+      await bot.send_message(message.from_user.id, text=texts.GREETING_MENU_SPB_PLACE % await db.get_name(await db.get_match_id(message.from_user.id)))
       logger.info('[%s@%s_%s] отправлено сообщение от помошника с выбором места' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
       keyboard = types.InlineKeyboardMarkup(resize_keyboard = True)
       smena_menu_button = types.InlineKeyboardButton(text=buttons_texts.SMENA_BUTTON, callback_data='smena')
@@ -2858,10 +2870,10 @@ async def congirm_meeting_message(message: types.Message, state: FSMContext):
       keyboard.add(jack_chan_button)
       await bot.send_message(message.from_user.id, text=texts.MENU_SPB_PLACE, reply_markup=keyboard)
       logger.info('[%s@%s_%s] вывод меню встречи' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    elif db.get_city(message.from_user.id, conn) == texts.MOSCOW_HELLO:
-      await bot.send_message(match_id, text=texts.MATCH_AGREE_SPBMSC % user_name)
+    elif db.get_city(message.from_user.id) == texts.MOSCOW_HELLO:
+      await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.MATCH_AGREE_SPBMSC % await db.get_name(message.from_user.id))
       logger.info('[%s@%s_%s] отправлено сообщение о согласии о свидании' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-      await bot.send_message(message.from_user.id, text=texts.MOSCOW_HELLO % match_name)
+      await bot.send_message(message.from_user.id, text=texts.MOSCOW_HELLO % await db.get_name(message.from_user.id))
       logger.info('[%s@%s_%s] отправлено сообщение от помошника с выбором места' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
       keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
       double_b = types.InlineKeyboardButton(text=buttons_texts.DOUBLE_B, callback_data='double_b')
@@ -2873,7 +2885,7 @@ async def congirm_meeting_message(message: types.Message, state: FSMContext):
       await bot.send_message(message.from_user.id, text=texts.MENU_SPB_PLACE, reply_markup=keyboard)
       logger.info('[%s@%s_%s] вывод меню встречи' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     else:
-        await bot.send_message(message.from_user.id, text=texts.MATCH_AGREE_OTHER % user_name)
+        await bot.send_message(message.from_user.id, text=texts.MATCH_AGREE_OTHER % await db.get_name(message.from_user.id))
         logger.info('[%s@%s_%s] вывод меню встречи' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
 
 @dp.callback_query_handler(text='are_u_deny_meeting', state=Form.has_match)
@@ -2938,14 +2950,14 @@ async def dont_like_look(message: types.Message, state: FSMContext):
     #     ]
     #   }) as resp: pass
     # ----------------------------------------------------------------
-    await db.set_reason_to_stop(message.from_user.id, conn, 'не понравился внешне')
+    await db.set_reason_to_stop(message.from_user.id, 'не понравился внешне')
     logger.warning('[%s@%s_%s] отослал причину в остановке общения [не понравился внешне]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     ok_meeting_button = types.InlineKeyboardButton(text=buttons_texts.OK_MEET, callback_data='ok_meeting')
     unlike_meeting_button = types.InlineKeyboardButton(text=buttons_texts.NOT_OK_MEET, callback_data='unlike_meeting')
     keyboard.add(ok_meeting_button)
     keyboard.add(unlike_meeting_button)
-    await bot.send_message(message.from_user.id, text=texts.CALLBACK_MEETING % await db.get_name(await db.get_match_id(message.from_user.id, conn), conn), reply_markup=keyboard)
+    await bot.send_message(message.from_user.id, text=texts.CALLBACK_MEETING % await db.get_name(await db.get_match_id(message.from_user.id)), reply_markup=keyboard)
     logger.info('[%s@%s_%s] вывод меню о том состоялась ли встреча' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
 
 @dp.callback_query_handler(text='callback_comunication')
@@ -2964,14 +2976,14 @@ async def dont_like_comunication(message: types.Message, state: FSMContext):
     #     ]
     #   }) as resp: pass
     # ----------------------------------------------------------------
-    await db.set_reason_to_stop(message.from_user.id, conn, 'не понравилось общение')
+    await db.set_reason_to_stop(message.from_user.id, 'не понравилось общение')
     logger.warning('[%s@%s_%s] причина выхода из диалога [не понравилось общение]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     ok_meeting_button = types.InlineKeyboardButton(text=buttons_texts.OK_MEET, callback_data='ok_meeting')
     unlike_meeting_button = types.InlineKeyboardButton(text=buttons_texts.NOT_OK_MEET, callback_data='unlike_meeting')
     keyboard.add(ok_meeting_button)
     keyboard.add(unlike_meeting_button)
-    await bot.send_message(message.from_user.id, text=texts.CALLBACK_MEETING % await db.get_name(await db.get_match_id(message.from_user.id, conn), conn), reply_markup=keyboard)
+    await bot.send_message(message.from_user.id, text=texts.CALLBACK_MEETING % await db.get_name(await db.get_match_id(message.from_user.id)), reply_markup=keyboard)
     logger.info('[%s@%s_%s] вывод меню о состоянии встречи' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
 
 
@@ -2991,14 +3003,14 @@ async def everything_ok(message: types.Message, state: FSMContext):
     #     ]
     #   }) as resp: pass
     # ----------------------------------------------------------------
-    await db.set_reason_to_stop(message.from_user.id, conn, 'Понравился, но время общения истекло')
+    await db.set_reason_to_stop(message.from_user.id, 'Понравился, но время общения истекло')
     logger.warning('[%s@%s_%s] причина выхода из диалога [понравился, но время общения истекло]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     ok_meeting_button = types.InlineKeyboardButton(text=buttons_texts.OK_MEET, callback_data='ok_meeting')
     unlike_meeting_button = types.InlineKeyboardButton(text=buttons_texts.NOT_OK_MEET, callback_data='unlike_meeting')
     keyboard.add(ok_meeting_button)
     keyboard.add(unlike_meeting_button)
-    await bot.send_message(message.from_user.id, text=texts.CALLBACK_MEETING % await db.get_name(await db.get_match_id(message.from_user.id, conn), conn), reply_markup=keyboard)
+    await bot.send_message(message.from_user.id, text=texts.CALLBACK_MEETING % await db.get_name(await db.get_match_id(message.from_user.id)), reply_markup=keyboard)
     logger.info('[%s@%s_%s] вывод меню о состоянии встречи' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
 
 @dp.callback_query_handler(text='callback_other')
@@ -3020,20 +3032,20 @@ async def callback_other(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, text=texts.CALLBACK_REASON)
     logger.info('[%s@%s_%s] другая причина отказа' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await Form.callback_other.set()
-    logger.warning('[%s@%s_%s] FSM state callback_other ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
+    logger.warning('[%s@%s_%s] FSM state callback_other ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
 @dp.message_handler(state=Form.callback_other, content_types= types.ContentTypes.ANY)
 async def set_message_other(message: types.Message, state: FSMContext):
     if message.content_type == 'text':
-        await db.set_reason_to_stop(message.from_user.id, conn, message.text)
+        await db.set_reason_to_stop(message.from_user.id, message.text)
         logger.warning('[%s@%s_%s] установить причину отказа "%s"' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.text))
         await state.reset_state()
-        logger.warning('[%s@%s_%s] FSM state callback_other OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.from_user.id))
+        logger.warning('[%s@%s_%s] FSM state callback_other OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
         ok_meeting_button = types.InlineKeyboardButton(text=buttons_texts.OK_MEET, callback_data='ok_meeting')
         unlike_meeting_button = types.InlineKeyboardButton(text=buttons_texts.NOT_OK_MEET, callback_data='unlike_meeting')
         keyboard.add(ok_meeting_button)
         keyboard.add(unlike_meeting_button)
-        await bot.send_message(message.from_user.id, text=texts.CALLBACK_MEETING % await db.get_name(await db.get_match_id(message.from_user.id, conn), conn), reply_markup=keyboard)
+        await bot.send_message(message.from_user.id, text=texts.CALLBACK_MEETING % await db.get_name(await db.get_match_id(message.from_user.id)), reply_markup=keyboard)
         logger.info('[%s@%s_%s] вывод меню о состоянии встречи' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     else:
          await bot.send_message(message.from_user.id, text=texts.NOT_TEXT_MESSAGE)
@@ -3043,7 +3055,7 @@ async def set_message_other(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(text='unlike_meeting')
 async def set_was_meeting_no(message: types.Message, state: FSMContext):
-    await db.set_meeting_status(message.from_user.id, conn, False)
+    await db.set_meeting_status(message.from_user.id, False)
     logger.warning('[%s@%s_%s] отправить статус стречи [False]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     #------------------------------------------------------------------
     #-----------------POST requset for some STATISTICS-----------------
@@ -3065,7 +3077,7 @@ async def set_was_meeting_no(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Form.unlike_meeting, content_types= types.ContentTypes.ANY)
 async def set_meeting_reaction(message: types.Message, state: FSMContext):
     if message.content_type == 'text':
-        await db.set_meeting_reaction(message.from_user.id, conn, message.text)
+        await db.set_meeting_reaction(message.from_user.id, message.text)
         logger.warning('[%s@%s_%s] занесение отзыва о встрече [%s] в БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, message.text))
         state.reset_state()
         logger.warning('[%s@%s_%s] FSM state unlike_meeting OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
@@ -3086,7 +3098,7 @@ async def set_meeting_reaction(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(text='ok_meeting')
 async def set_was_meeting_yes(message: types.Message, state: FSMContext):
-  await db.set_meeting_status(message.from_user.id, conn, True)
+  await db.set_meeting_status(message.from_user.id, True)
   logger.warning('[%s@%s_%s] отправил статус была ли встреча [True]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
   #------------------------------------------------------------------
   #-----------------POST requset for some STATISTICS-----------------
@@ -3113,19 +3125,19 @@ async def set_was_meeting_yes(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(text='all_like')
 async def set_meeting_reaction_ok(message: types.Message, state: FSMContext):
-    await db.set_meeting_reaction(message.from_user.id, conn, 'Встреча понравилась')
+    await db.set_meeting_reaction(message.from_user.id, 'Встреча понравилась')
     logger.warning('[%s@%s_%s] установлена Реакция на встречу [Встреча понравилась]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await bot.send_message(message.from_user.id, text=texts.END_CALLBACK)
-    await db.set_match_id_manualy(message.from_user.id, conn, 0)
+    await db.set_match_id_manualy(message.from_user.id, 0)
     logger.warning('[%s@%s_%s] сброшен match_id' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await db.set_reason_to_stop(message.from_user.id, conn, 'Вышло время')
+    await db.set_reason_to_stop(message.from_user.id, 'Вышло время')
     logger.warning('[%s@%s_%s] установлена причина выхода из диалога [Время вышло]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await schedule_jobs(message.from_user.id, state, message.from_user.first_name, message.from_user.last_name)
 
 @dp.callback_query_handler(text='neutral_meeting')
 async def set_meeting_reaction_neutral(message: types.Message, state: FSMContext):
-    await db.set_meeting_reaction(message.from_user.id, conn, 'Ничего особенного')
+    await db.set_meeting_reaction(message.from_user.id, 'Ничего особенного')
     logger.warning('[%s@%s_%s] установлена Реакция на встречу [Ничего особенного]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     dont_like_look_button = types.InlineKeyboardButton(text=buttons_texts.LOOK, callback_data='meeting_look')
@@ -3139,7 +3151,7 @@ async def set_meeting_reaction_neutral(message: types.Message, state: FSMContext
 
 @dp.callback_query_handler(text='dont_like_meeting')
 async def set_meeting_reaction_negative(message: types.Message, state: FSMContext):
-    await db.set_meeting_reaction(message.from_user.id, conn, 'Не понравилась')
+    await db.set_meeting_reaction(message.from_user.id, 'Не понравилась')
     logger.warning('[%s@%s_%s] установлена Реакция на встречу [Не понравилась]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     dont_like_look_button = types.InlineKeyboardButton(text=buttons_texts.LOOK, callback_data='meeting_look')
@@ -3153,64 +3165,64 @@ async def set_meeting_reaction_negative(message: types.Message, state: FSMContex
 
 @dp.callback_query_handler(text='meeting_look')
 async def set_why_meeting_bad_look(message: types.Message, state: FSMContext):
-  await db.set_why_meeting_bad(message.from_user.id, conn, 'Не понравился внешне')
+  await db.set_why_meeting_bad(message.from_user.id, 'Не понравился внешне')
   logger.warning('[%s@%s_%s] установлена Реакция на встречу [Не понравился внешне]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
   # --------------POST request to END MATCHING--------------
   # async with aiohttp.ClientSession() as session:
   #   async with session.post(url='https://server.unison.dating/user/stop_match?user_id=%s' % message.from_user.id, json={
-  #     "reason": "Время истекло и %s" % await db.get_reason_to_stop(message.from_user.id, conn),
-  #     "was_meeting": await db.is_meeting(message.from_user.id, conn),
-  #     "meeting_reaction": await db.get_meeting_reaction(message.from_user.id, conn),
-  #     "why_meeting_bad": await db.get_why_meeting_bad(message.from_user.id, conn)
+  #     "reason": "Время истекло и %s" % await db.get_reason_to_stop(message.from_user.id),
+  #     "was_meeting": await db.is_meeting(message.from_user.id),
+  #     "meeting_reaction": await db.get_meeting_reaction(message.from_user.id),
+  #     "why_meeting_bad": await db.get_why_meeting_bad(message.from_user.id)
   #   }) as resp: pass
   # --------------------------------------------------------
   await bot.send_message(message.from_user.id, text=texts.END_CALLBACK)
-  await db.set_match_id_manualy(message.from_user.id, conn, 0)
+  await db.set_match_id_manualy(message.from_user.id, 0)
   logger.warning('[%s@%s_%s] сброшен match id' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-  await db.set_reason_to_stop(message.from_user.id, conn, 'Время вышло')
+  await db.set_reason_to_stop(message.from_user.id, 'Время вышло')
   logger.warning('[%s@%s_%s] сброшен match id' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
   logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
   await schedule_jobs(message.from_user.id, state, message.from_user.first_name, message.from_user.last_name)
 
 @dp.callback_query_handler(text='meeting_behavior')
 async def set_why_meeting_bad_behavior(message: types.Message, state: FSMContext):
-    await db.set_why_meeting_bad(message.from_user.id, conn, 'Не понравилось поведение')
+    await db.set_why_meeting_bad(message.from_user.id, 'Не понравилось поведение')
     logger.warning('[%s@%s_%s] установлена Реакция на встречу [Не понравилось поведение]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     # --------------POST request to END MATCHING--------------
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/stop_match?user_id=%s' % message.from_user.id, json={
-    #     "reason": "Время истекло и %s" % await db.get_reason_to_stop(message.from_user.id, conn),
-    #     "was_meeting": await db.is_meeting(message.from_user.id, conn),
-    #     "meeting_reaction": await db.get_meeting_reaction(message.from_user.id, conn),
-    #     "why_meeting_bad": await db.get_why_meeting_bad(message.from_user.id, conn)
+    #     "reason": "Время истекло и %s" % await db.get_reason_to_stop(message.from_user.id),
+    #     "was_meeting": await db.is_meeting(message.from_user.id),
+    #     "meeting_reaction": await db.get_meeting_reaction(message.from_user.id),
+    #     "why_meeting_bad": await db.get_why_meeting_bad(message.from_user.id)
     #   }) as resp: pass
     # --------------------------------------------------------
     await bot.send_message(message.from_user.id, text=texts.END_CALLBACK)
-    await db.set_match_id_manualy(message.from_user.id, conn, 0)
+    await db.set_match_id_manualy(message.from_user.id, 0)
     logger.warning('[%s@%s_%s] сброшен match id' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await db.set_reason_to_stop(message.from_user.id, conn, 'Время вышло')
+    await db.set_reason_to_stop(message.from_user.id, 'Время вышло')
     logger.warning('[%s@%s_%s] установлена причина остановки общения [Время вышло]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await schedule_jobs(message.from_user.id, state, message.from_user.first_name, message.from_user.last_name)
 
 @dp.callback_query_handler(text='meeting_place')
 async def set_why_meeting_bad_place(message: types.Message, state: FSMContext):
-    await db.set_why_meeting_bad(message.from_user.id, conn, 'Не понравился внешне')
+    await db.set_why_meeting_bad(message.from_user.id, 'Не понравился внешне')
     logger.warning('[%s@%s_%s] установлена реакция на встречу [Не понравился внешне]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await state.reset_state()
     # --------------POST request to END MATCHING--------------
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/stop_match?user_id=%s' % data['user_id'], json={
-    #     "reason": "Время истекло и %s" % await db.get_reason_to_stop(message.from_user.id, conn),
-    #     "was_meeting": await db.is_meeting(message.from_user.id, conn),
-    #     "meeting_reaction": await db.get_meeting_reaction(message.from_user.id, conn),
-    #     "why_meeting_bad": await db.get_why_meeting_bad(message.from_user.id, conn)
+    #     "reason": "Время истекло и %s" % await db.get_reason_to_stop(message.from_user.id),
+    #     "was_meeting": await db.is_meeting(message.from_user.id),
+    #     "meeting_reaction": await db.get_meeting_reaction(message.from_user.id),
+    #     "why_meeting_bad": await db.get_why_meeting_bad(message.from_user.id)
     #   }) as resp: pass
     # --------------------------------------------------------
     await bot.send_message(message.from_user.id, text=texts.END_CALLBACK)
-    await db.set_match_id_manualy(message.from_user.id, conn, 0)
+    await db.set_match_id_manualy(message.from_user.id, 0)
     logger.warning('[%s@%s_%s] сброшен match_id' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await db.set_reason_to_stop(message.from_user.id, conn, 'Время вышло')
+    await db.set_reason_to_stop(message.from_user.id, 'Время вышло')
     logger.warning('[%s@%s_%s] установлена причина остановки общения [Время вышло]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await schedule_jobs(message.from_user.id, state, message.from_user.first_name, message.from_user.last_name)
@@ -3247,7 +3259,7 @@ async def choose_smena(query: types.CallbackQuery, state: FSMContext):
   # -------------------------------------------
   logger.info('[%s@%s_%s] выбрано кафе Смена' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
   await query.message.edit_text(text=texts.FIN_MEET_MESSAGE)
-  await bot.send_message(await db.get_match_id(query.from_user.id, conn), text=texts.SMENA_MEET_PLACE)
+  await bot.send_message(await db.get_match_id(query.from_user.id), text=texts.SMENA_MEET_PLACE)
 
 @dp.callback_query_handler(text='mickey', state=Form.has_match)
 async def show_mickey(query: types.CallbackQuery, state: FSMContext):
@@ -3275,7 +3287,7 @@ async def choose_mickey(query: types.CallbackQuery, state: FSMContext):
     #   }) as resp: pass
     # -------------------------------------------
     await query.message.edit_text(text=texts.FIN_MEET_MESSAGE)
-    await bot.send_message(await db.get_match_id(query.from_user.id, conn), text=texts.MICKEY_MEET_PLACE)
+    await bot.send_message(await db.get_match_id(query.from_user.id), text=texts.MICKEY_MEET_PLACE)
     logger.info('[%s@%s_%s] выбрано кафе Mickey & Monkeys' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
 
 @dp.callback_query_handler(text='jack_and_chan', state=Form.has_match)
@@ -3304,7 +3316,7 @@ async def choose_jack(query: types.CallbackQuery, state: FSMContext):
     #   }) as resp: pass
     # -------------------------------------------
     await query.message.edit_text(text=texts.FIN_MEET_MESSAGE)
-    await bot.send_message(await db.get_match_id(query.from_user.id, conn), text=texts.JACK_MEET_PLACE)
+    await bot.send_message(await db.get_match_id(query.from_user.id), text=texts.JACK_MEET_PLACE)
     logger.info('[%s@%s_%s] выбрано кафе Jack & Chan' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
 
 # ____________MSC_______________________
@@ -3334,7 +3346,7 @@ async def choose_double_b(query:types.CallbackQuery, state: FSMContext):
   #   }) as resp: pass
   # -------------------------------------------
   await query.message.edit_text(text=texts.FIN_MEET_MESSAGE)
-  await bot.send_message(await db.get_match_id(query.from_user.id, conn), text=texts.DOUBLE_B_PLACE)
+  await bot.send_message(await db.get_match_id(query.from_user.id), text=texts.DOUBLE_B_PLACE)
   logger.info('[%s@%s_%s] выбрано кафе Double B' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
 
 @dp.callback_query_handler(text='propoganda', state=Form.has_match)
@@ -3363,7 +3375,7 @@ async def choose_propoganda(query: types.CallbackQuery, state: FSMContext):
   #     ]
   #   }) as resp: pass
   # -------------------------------------------
-  await bot.send_message(await db.get_match_id(query.from_user.id, conn), text=texts.PROPOGANDA_PLACE)
+  await bot.send_message(await db.get_match_id(query.from_user.id), text=texts.PROPOGANDA_PLACE)
   logger.info('[%s@%s_%s] выбрано кафе Propoganda' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
 
 @dp.callback_query_handler(text='she', state=Form.has_match)
@@ -3392,7 +3404,7 @@ async def choose_she(query: types.CallbackQuery, state: FSMContext):
   #     ]   
   #   }) as resp:pass
   # -------------------------------------------
-  await bot.send_message(await db.get_match_id(query.from_user.id, conn), text=texts.SHE_PLACE)
+  await bot.send_message(await db.get_match_id(query.from_user.id), text=texts.SHE_PLACE)
   logger.info('[%s@%s_%s] выбрано кафе She' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
 
 @dp.callback_query_handler(text='spb_menu', state=Form.has_match)
@@ -3472,14 +3484,14 @@ async def payment_ok(message: types.Message, state: FSMContext):
   # ----------------------------------------------------
   # ---------SENDING INFO to MODERATION CHAT------------
   await bot.send_message(-776565232, text=texts.PAYMENTS_FOR_MODERATION % (message.from_user.id,
-                                                                          await db.get_name(message.from_user.id, conn),
+                                                                          await db.get_name(message.from_user.id),
                                                                           message.from_user.id), parse_mode='markdown')
   # ----------------------------------------------------
   await Form.no_match.set()
 
 @dp.callback_query_handler(state=Form.payment_ends)
 async def payment_ends(message: types.Message, state: FSMContext):
-  await db.set_subscribtion_status(message.from_user.id, conn, False)
+  await db.set_subscribtion_status(message.from_user.id, False)
   # ----------------------------------------------------------------
   # ----------------POST request for some STATISTICS----------------
   # async with aiohttp.ClientSession() as session:
@@ -3494,7 +3506,7 @@ async def payment_ends(message: types.Message, state: FSMContext):
   #   }) as resp: pass
   # ----------------------------------------------------------------
   keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-  if await db.is_subscribed(message.from_user.id, conn):
+  if await db.is_subscribed(message.from_user.id):
     get_subsc = types.InlineKeyboardButton(text=buttons_texts.GET_SUBSC, callback_data='have_subscribtion')
   else:
     get_subsc = types.InlineKeyboardButton(text=buttons_texts.GET_SUBSC, callback_data='doesnt_have_subscribtions')
@@ -3570,19 +3582,19 @@ async def dont_like_look(query: types.CallbackQuery, state: FSMContext):
     #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
     #     "events": [
     #       {
-    #       "user_id": await db.get_match_id(query.from_user.id, conn),
+    #       "user_id": await db.get_match_id(query.from_user.id),
     #         "event_type": "bot_chating_partner_end_reason_ugly"
     #       }
     #     ]
     #   }) as resp: pass
     #--------------------------------------------------------------------------------------
-    await db.set_reason_to_stop(query.from_user.id, conn, 'Не понравился внешне')
+    await db.set_reason_to_stop(query.from_user.id, 'Не понравился внешне')
     logger.warning('[%s@%s_%s] отправлено значение причины остановки общения [Не понравился внешне]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     #--------------------------------------------------------------------------------------
     #--------------POST reuqest to stop MATCH----------------------------------------------
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/stop_match?%s' % query.from_user.id, json={
-    #     "reason": await db.get_reason_to_stop(query.from_user.id, conn)
+    #     "reason": await db.get_reason_to_stop(query.from_user.id)
     #   }) as resp: pass
     #--------------------------------------------------------------------------------------
     # async with aiohttp.ClientSession() as session:
@@ -3590,42 +3602,37 @@ async def dont_like_look(query: types.CallbackQuery, state: FSMContext):
     #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
     #     "events": [
     #       {
-    #         "user_id": await db.get_match_id(query.from_user.id, conn),
+    #         "user_id": await db.get_match_id(query.from_user.id),
     #         "event_type": "bot_chating_ended_partner_choosing"
     #       }
     #     ]
     #   }) as resp: pass
     # -------------------------------------------------------------------------------------
     keyboard = types.ReplyKeyboardRemove()
-    match_id = await db.get_match_id(query.from_user.id, conn)
     logger.warning('[%s@%s_%s] вытащен из БД match id' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     # sending MATCH USER message about leaving the chat-----------------
-    await bot.send_message(match_id, text=texts.USER_LEAVE_CAHT, reply_markup=keyboard)
+    await bot.send_message(await db.get_match_id(query.from_user.id), text=texts.USER_LEAVE_CAHT, reply_markup=keyboard)
     logger.info('[%s@%s_%s] вывод сообщения о том что пользователь покинул чат' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     # __________________________________________________________________
     if scheduler.get_job('unmatch_%s' % query.from_user.id, 'default'):
         scheduler.remove_job('unmatch_%s' % query.from_user.id, 'default')
     logger.warning('[%s@%s_%s] удаление задачи unmatch для пользователя' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    if scheduler.get_job('unmatch_%s' % match_id, 'default'):
-        scheduler.remove_job('unmatch_%s' % match_id, 'default')
+    if scheduler.get_job('unmatch_%s' % await db.get_match_id(query.from_user.id), 'default'):
+        scheduler.remove_job('unmatch_%s' % await db.get_match_id(query.from_user.id), 'default')
     logger.warning('[%s@%s_%s] удаление задачи unmatch для его пары' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     # DELETE MATCH INFO --------------------------------------------------------------------------------------------
-    await db.set_match_id_manualy(match_id, conn, 0)
-    logger.warning('[%s@%s_%s] обнуление match id у пользователя' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_match_id_manualy(query.from_user.id, conn, 0)
-    logger.warning('[%s@%s_%s] обнуление match id у его пары' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_match_status(query.from_user.id, conn, False)
+    await db.set_match_status(query.from_user.id, False)
     logger.warning('[%s@%s_%s] статус пользователя "есть пара" - False' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_match_status(match_id, conn, False)
+    await db.set_match_status(await db.get_match_id(query.from_user.id), False)
     logger.warning('[%s@%s_%s] статус его пары "есть пара" - False' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     await schedule_jobs(query.from_user.id, state)
-    state = dp.current_state(chat=match_id, user=match_id)
+    state = dp.current_state(chat=await db.get_match_id(query.from_user.id), user=await db.get_match_id(query.from_user.id))
     logger.warning('[%s@%s_%s] FSM get state of match' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await state.set_state(Form.no_match)
+    await state.set_state(None)
     logger.warning('[%s@%s_%s] FSM state no_match ON' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     logger.info('[%s@%s_%s] вывод пары в планировщик и вывод нужного меню' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await schedule_jobs(match_id, state)
+    await schedule_jobs(await db.get_match_id(query.from_user.id), state)
 
 
 
@@ -3650,19 +3657,19 @@ async def show_ignore(query: types.CallbackQuery, state: FSMContext):
     #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
     #     "events": [
     #       {
-    #         "user_id": await db.get_match_id(message.from_user.id, conn),
+    #         "user_id": await db.get_match_id(message.from_user.id),
     #         "event_type": "bot_chating_self_end_reason_noreply"
     #       }
     #     ]
     #   }) as resp: pass
     #--------------------------------------------------------------------------------------
-    await db.set_reason_to_stop(query.from_user.id, conn, 'собеседник не отвечает')
+    await db.set_reason_to_stop(query.from_user.id, 'собеседник не отвечает')
     logger.warning('[%s@%s_%s] установка причины окончания остановки [собеседник не отвечает]' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     #--------------------------------------------------------------------------------------
     #--------------POST reuqest to stop MATCH----------------------------------------------
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/stop_match?%s' % message.from_user.id, json={
-    #     "reason": await db.get_reason_to_stop(message.from_user.id, conn)
+    #     "reason": await db.get_reason_to_stop(message.from_user.id)
     #     }) as resp: pass
     keyboard = types.ReplyKeyboardRemove()
 
@@ -3673,39 +3680,34 @@ async def show_ignore(query: types.CallbackQuery, state: FSMContext):
     #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
     #     "events": [
     #       {
-    #         "user_id": await db.get_match_id(message.from_user.id, conn),
+    #         "user_id": await db.get_match_id(message.from_user.id),
     #         "event_type": "bot_chating_ended_partner_choosing"
     #       }
     #     ]
     #   }) as resp: pass
-    match_id = await db.get_match_id(query.from_user.id, conn)
-    await bot.send_message(match_id, text=texts.USER_LEAVE_CAHT, reply_markup=keyboard)
+    await bot.send_message(await db.get_match_id(query.from_user.id), text=texts.USER_LEAVE_CAHT, reply_markup=keyboard)
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     logger.info('[%s@%s_%s] вывод сообщения о том что пользователь покинул чат' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     # __________________________________________________________________
     if scheduler.get_job('unmatch_%s' % query.from_user.id, 'default'):
         scheduler.remove_job('unmatch_%s' % query.from_user.id, 'default')
     logger.warning('[%s@%s_%s] удаление задачи unmatch для пользователя' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    if scheduler.get_job('unmatch_%s' % match_id, 'default'):
-        scheduler.remove_job('unmatch_%s' % match_id, 'default')
+    if scheduler.get_job('unmatch_%s' % await db.get_match_id(query.from_user.id), 'default'):
+        scheduler.remove_job('unmatch_%s' % await db.get_match_id(query.from_user.id), 'default')
     logger.warning('[%s@%s_%s] удаление задачи unmatch для его пары' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     # DELETE MATCH INFO --------------------------------------------------------------------------------------------
-    await db.set_match_id_manualy(match_id, conn, 0)
-    logger.warning('[%s@%s_%s] обнуление match id у пользователя' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_match_id_manualy(query.from_user.id, conn, 0)
-    logger.warning('[%s@%s_%s] обнуление match id у его пары' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_match_status(query.from_user.id, conn, False)
+    await db.set_match_status(query.from_user.id, False)
     logger.warning('[%s@%s_%s] статус пользователя "есть пара" - False' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_match_status(match_id, conn, False)
+    await db.set_match_status(await db.get_match_id(query.from_user.id), False)
     logger.warning('[%s@%s_%s] статус его пары "есть пара" - False' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     await schedule_jobs(query.from_user.id, state, query.from_user.first_name, query.from_user.last_name, True, query=query)
-    state = dp.current_state(chat=match_id, user=match_id)
+    state = dp.current_state(chat=await db.get_match_id(query.from_user.id), user=await db.get_match_id(query.from_user.id))
     logger.warning('[%s@%s_%s] FSM get state of match' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await state.set_state(Form.no_match)
+    await state.set_state(None)
     logger.warning('[%s@%s_%s] FSM state no_match ON' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     logger.info('[%s@%s_%s] вывод пары в планировщик и вывод нужного меню' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await schedule_jobs(match_id, state)
+    await schedule_jobs(await db.get_match_id(query.from_user.id), state)
 
 @dp.callback_query_handler(text='dont_like_comunication')
 async def dont_like_comunication(query: types.CallbackQuery, state: FSMContext):
@@ -3728,18 +3730,18 @@ async def dont_like_comunication(query: types.CallbackQuery, state: FSMContext):
     #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
     #     "events": [
     #       {
-    #         "user_id": await db.get_match_id(message.from_user.id, conn),
+    #         "user_id": await db.get_match_id(message.from_user.id),
     #         "event_type": "bot_chating_partner_end_reason_stupid"
     #       }
     #     ]
     #   }) as resp: pass
     #--------------------------------------------------------------------------------------
-    await db.set_reason_to_stop(query.from_user.id, conn, "не понравилось общение")
+    await db.set_reason_to_stop(query.from_user.id, "не понравилось общение")
     #--------------------------------------------------------------------------------------
     #--------------POST reuqest to stop MATCH----------------------------------------------
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/stop_match?%s' % message.from_user.id, json={
-    #     "reason": await db.get_reason_to_stop(message.from_user.id, conn)
+    #     "reason": await db.get_reason_to_stop(message.from_user.id)
     #   }) as resp: pass
     #--------------------------------------------------------------------------------------
     #---------------STOP MATCH USER-------------------------------------------------------------
@@ -3751,39 +3753,34 @@ async def dont_like_comunication(query: types.CallbackQuery, state: FSMContext):
     #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
     #     "events": [
     #       {
-    #         "user_id": await db.get_match_id(message.from_user.id, conn),
+    #         "user_id": await db.get_match_id(message.from_user.id),
     #         "event_type": "bot_chating_ended_partner_choosing"
     #       }
     #     ]
     #   }) as resp: pass
-    match_id = await db.get_match_id(query.from_user.id, conn)
-    await bot.send_message(match_id, text=texts.USER_LEAVE_CAHT, reply_markup=keyboard)
+    await bot.send_message(await db.get_match_id(query.from_user.id), text=texts.USER_LEAVE_CAHT, reply_markup=keyboard)
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     logger.info('[%s@%s_%s] вывод сообщения о том что пользователь покинул чат' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     # __________________________________________________________________
     if scheduler.get_job('unmatch_%s' % query.from_user.id, 'default'):
         scheduler.remove_job('unmatch_%s' % query.from_user.id, 'default')
     logger.warning('[%s@%s_%s] удаление задачи unmatch для пользователя' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    if scheduler.get_job('unmatch_%s' % match_id, 'default'):
-        scheduler.remove_job('unmatch_%s' % match_id, 'default')
+    if scheduler.get_job('unmatch_%s' % await db.get_match_id(query.from_user.id), 'default'):
+        scheduler.remove_job('unmatch_%s' % await db.get_match_id(query.from_user.id), 'default')
     logger.warning('[%s@%s_%s] удаление задачи unmatch для его пары' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     # DELETE MATCH INFO --------------------------------------------------------------------------------------------
-    await db.set_match_id_manualy(match_id, conn, 0)
-    logger.warning('[%s@%s_%s] обнуление match id у пользователя' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_match_id_manualy(query.from_user.id, conn, 0)
-    logger.warning('[%s@%s_%s] обнуление match id у его пары' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_match_status(query.from_user.id, conn, False)
+    await db.set_match_status(query.from_user.id, False)
     logger.warning('[%s@%s_%s] статус пользователя "есть пара" - False' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await db.set_match_status(match_id, conn, False)
+    await db.set_match_status(await db.get_match_id(query.from_user.id), False)
     logger.warning('[%s@%s_%s] статус его пары "есть пара" - False' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     await schedule_jobs(query.from_user.id, state, query.from_user.first_name, query.from_user.last_name, True, query=query)
-    state = dp.current_state(chat=match_id, user=match_id)
+    state = dp.current_state(chat=await db.get_match_id(query.from_user.id), user=await db.get_match_id(query.from_user.id))
     logger.warning('[%s@%s_%s] FSM get state of match' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await state.set_state(Form.no_match)
+    await state.set_state(None)
     logger.warning('[%s@%s_%s] FSM state no_match ON' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
     logger.info('[%s@%s_%s] вывод пары в планировщик и вывод нужного меню' % (query.from_user.id, query.from_user.first_name, query.from_user.last_name))
-    await schedule_jobs(match_id, state)
+    await schedule_jobs(await db.get_match_id(query.from_user.id), state)
 
 @dp.callback_query_handler(text='dont_like_other')
 async def dont_like_other(message: types.Message, state: FSMContext):
@@ -3806,7 +3803,7 @@ async def dont_like_other(message: types.Message, state: FSMContext):
     #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
     #     "events": [
     #       {
-    #         "user_id": await db.get_match_id(message.from_user.id, conn),
+    #         "user_id": await db.get_match_id(message.from_user.id),
     #         "event_type": "bot_chating_partner_end_reason_else"
     #       }
     #     ]
@@ -3815,13 +3812,13 @@ async def dont_like_other(message: types.Message, state: FSMContext):
     await Form.why_dont_like.set()
 @dp.message_handler(state=Form.why_dont_like, content_types=types.ContentTypes.TEXT)
 async def set_reason(message: types.Message, state: FSMContext):
-    await db.set_reason_to_stop(message.from_user.id, conn, message.text)
+    await db.set_reason_to_stop(message.from_user.id, message.text)
     await state.reset_state(with_data=False)
     #--------------------------------------------------------------------------------------
     #--------------POST reuqest to stop MATCH----------------------------------------------
     # async with aiohttp.ClientSession() as session:
     #   async with session.post(url='https://server.unison.dating/user/stop_match?%s' % message.from_user.id, json={
-    #     "reason": await db.get_reason_to_stop(message.from_user.id, conn)
+    #     "reason": await db.get_reason_to_stop(message.from_user.id)
     #   }) as resp: pass
     #--------------------------------------------------------------------------------------
     #---------------STOP MATCH USER-------------------------------------------------------------
@@ -3833,39 +3830,34 @@ async def set_reason(message: types.Message, state: FSMContext):
     #     "api_key": "ae25dbb3d0221e54b7d20f3a51e08edc",
     #     "events": [
     #       {
-    #         "user_id": await db.get_match_id(message.from_user.id, conn),
+    #         "user_id": await db.get_match_id(message.from_user.id),
     #         "event_type": "bot_chating_ended_partner_choosing"
     #       }
     #     ]
     #   }) as resp: pass
-    match_id = await db.get_match_id(message.from_user.id, conn)
-    await bot.send_message(match_id, text=texts.USER_LEAVE_CAHT, reply_markup=keyboard)
+    await bot.send_message(await db.get_match_id(message.from_user.id), text=texts.USER_LEAVE_CAHT, reply_markup=keyboard)
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     logger.info('[%s@%s_%s] вывод сообщения о том что пользователь покинул чат' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     # __________________________________________________________________
     if scheduler.get_job('unmatch_%s' % message.from_user.id, 'default'):
         scheduler.remove_job('unmatch_%s' % message.from_user.id, 'default')
     logger.warning('[%s@%s_%s] удаление задачи unmatch для пользователя' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    if scheduler.get_job('unmatch_%s' % match_id, 'default'):
-        scheduler.remove_job('unmatch_%s' % match_id, 'default')
+    if scheduler.get_job('unmatch_%s' % await db.get_match_id(message.from_user.id), 'default'):
+        scheduler.remove_job('unmatch_%s' % await db.get_match_id(message.from_user.id), 'default')
     logger.warning('[%s@%s_%s] удаление задачи unmatch для его пары' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     # DELETE MATCH INFO --------------------------------------------------------------------------------------------
-    await db.set_match_id_manualy(match_id, conn, 0)
-    logger.warning('[%s@%s_%s] обнуление match id у пользователя' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await db.set_match_id_manualy(message.from_user.id, conn, 0)
-    logger.warning('[%s@%s_%s] обнуление match id у его пары' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await db.set_match_status(message.from_user.id, conn, False)
+    await db.set_match_status(message.from_user.id, False)
     logger.warning('[%s@%s_%s] статус пользователя "есть пара" - False' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await db.set_match_status(match_id, conn, False)
+    await db.set_match_status(await db.get_match_id(message.from_user.id), False)
     logger.warning('[%s@%s_%s] статус его пары "есть пара" - False' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     logger.info('[%s@%s_%s] выход в планировщик и вывод нужного меню' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     await schedule_jobs(message.from_user.id, state, message.from_user.first_name, message.from_user.last_name)
-    state = dp.current_state(chat=match_id, user=match_id)
+    state = dp.current_state(chat=await db.get_match_id(message.from_user.id), user=await db.get_match_id(message.from_user.id))
     logger.warning('[%s@%s_%s] FSM get state of match' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await state.set_state(Form.no_match)
+    await state.set_state(None)
     logger.warning('[%s@%s_%s] FSM state no_match ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
     logger.info('[%s@%s_%s] вывод пары в планировщик и вывод нужного меню' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-    await schedule_jobs(match_id, state)
+    await schedule_jobs(await db.get_match_id(message.from_user.id), state)
 
 # +-------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 # |                   FORWARDING PHOTOS                                                                                                                                     |
@@ -3874,16 +3866,15 @@ async def set_reason(message: types.Message, state: FSMContext):
 async def upload_photo_to_match(message: types.Message, state: FSMContext):
     if message.content_type=='photo':
         logger.info('[%s@%s_%s] загрузка фотки для отправки' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-        error_status = await db.get_error_status(message.from_user.id, conn)
+        error_status = await db.get_error_status(message.from_user.id)
         logger.warning('[%s@%s_%s] получение статуса ошибки [%s]' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name, error_status))
         if message.media_group_id:
             if not error_status:
                 logger.warning('[%s@%s_%s] попытка отправить не 1 фотографию, а медиа группу' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-                await db.set_error_status(message.from_user.id, conn, True)
+                await db.set_error_status(message.from_user.id, True)
                 await message.answer(text=texts.MEDIA_GROUP_ERROR)
-                await db.set_error_status(message.from_user.id, conn, False)
+                await db.set_error_status(message.from_user.id, False)
             return
-        #data = await state.get_data()
         photo_id = message.photo[-1].file_id
         #-----------------------------------------------------------------
         #----------------POST request for some statistics-----------------
@@ -3899,9 +3890,8 @@ async def upload_photo_to_match(message: types.Message, state: FSMContext):
         #   }) as resp: pass
         #-----------------------------------------------------------------
         # WE FORWARDING PHOTO SO IT CAN BE DONE WITH ID OF IMAGE
-        match_id = await db.get_match_id(message.from_user.id, conn)
         logger.warning('[%s@%s_%s] получение match id из БД' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
-        await bot.send_photo(match_id, photo=photo_id)
+        await bot.send_photo(await db.get_match_id(message.from_user.id), photo=photo_id)
         await state.reset_state()
         logger.warning('[%s@%s_%s] FSM state upload_photo_to_match ON' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         await Form.has_match.set()
@@ -3922,7 +3912,7 @@ async def get_comunication_help_message(message: types.Message, state: FSMContex
         await state.reset_state()
         logger.warning('[%s@%s_%s] FSM state get_help_message OFF' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))
         await bot.send_message(-776565232, text=texts.COMPLAIN_MODERATION % (message.from_user.id,
-                                                                            await db.get_name(message.from_user.id, conn),
+                                                                            await db.get_name(message.from_user.id),
                                                                             message.from_user.id,
                                                                             help_message), parse_mode='Markdown')
         logger.info('[%s@%s_%s] отправлено сообщение в чат модерации' % (message.from_user.id, message.from_user.first_name, message.from_user.last_name))

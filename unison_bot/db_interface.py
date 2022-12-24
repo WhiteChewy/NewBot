@@ -1,478 +1,884 @@
-import asyncio
-import asyncpg
 import datetime
+import aiohttp
+import json
 from config import DB_PASSWORD, DB_USER
 
-async def get_user_id(id: int, connection: asyncpg.connection.Connection) -> int:
-    row = await connection.fetchrow('SELECT user_id FROM users WHERE user_id=$1', id)
-    return row['user_id']
 
-async def get_match_id(id: int, connection: asyncpg.connection.Connection) -> int:
-    row = await connection.fetchrow('SELECT match_id FROM users WHERE user_id=$1', id)
-    return row['match_id']
-
-async def get_name(id: int, connection: asyncpg.connection.Connection) -> str:
-    row =  await connection.fetchrow('SELECT name FROM users WHERE user_id=$1', id)
-    return row['name']
-
-async def get_city(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT city FROM users WHERE user_id=$1', id)
-    return row['city']
-
-async def get_gender(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT gender FROM users WHERE user_id=$1', id)
-    return row['gender']
-
-async def get_birthday(id: int, connection: asyncpg.connection.Connection) -> datetime.date:
-    row = await connection.fetchrow('SELECT birthday FROM users WHERE user_id=$1', id)
-    return row['birthday']
-
-async def get_reason(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT reason FROM users WHERE user_id=$1', id)
-    return row['reason']
-
-async def get_profile_photo(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT profile_photo FROM users WHERE user_id=$1', id)
-    return row['profile_photo']
-
-async def is_subscribed(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT subscribtion FROM users WHERE user_id=$1', id)
-    return row['subscribtion']
-
-async def is_paused(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT matching_pause FROM users WHERE user_id=$1', id)
-    return row['matching_pause']
-
-async def get_reason_to_stop(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT reason_to_stop FROM users WHERE user_id=$1', id)
-    return row['reason_to_stop']
-
-async def is_meeting(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT was_meeting FROM users WHERE user_id=$1', id)
-    return row['was_meeting']
-
-async def get_meeting_reaction(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT meeting_reaction FROM users WHERE user_id=$1', id)
-    return row['meeting_reaction']
-
-async def get_why_meeting_bad(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT why_meeting_bad FROM users WHERE user_id=$1', id)
-    return row['why_meeting_bad']
-
-async def get_payment_url(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT payment_url FROM users WHERE user_id=$1', id)
-    return row['payment_url']
-
-async def is_waiting_payment(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT is_waiting_payment FROM users WHERE user_id=$1', id)
-    return row['is_waiting_payment']
-
-async def is_matching(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT has_match FROM users WHERE user_id=$1', id)
-    return row['has_match']
-
-async def is_help(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT help FROM users WHERE user_id=$1', id)
-    return row['help']
-
-async def is_first_time(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT first_time FROM users WHERE user_id=$1', id)
-    return row['first_time']
-
-async def is_comunication_complain(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT comunication_complain FROM users WHERE user_id=$1', id)
-    return row['comunication_complain']
-
-async def get_1st_extra_photo(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT first_extra_photo FROM users WHERE user_id=$1', id)
-    return row['first_extra_photo']
-
-async def get_2nd_extra_photo(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT second_extra_photo FROM users WHERE user_id=$1', id)
-    return row['second_extra_photo']
-
-async def get_3rd_extra_photo(id: int, connection: asyncpg.connection.Connection) -> str:
-    row = await connection.fetchrow('SELECT third_extra_photo FROM users WHERE user_id=$1', id)
-    return row['third_extra_photo']
-
-async def is_moderated(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT is_moderated FROM users WHERE user_id=$1', id)
-    return row['is_moderated']
-
-async def is_first_time_moderated(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT is_first_time_moderated FROM users WHERE user_id=$1', id)
-    return row['is_first_time_moderated']
-
-async def is_photo_ok(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT is_photo_ok FROM users WHERE user_id=$1', id)
-    return row['is_photo_ok']
-
-async def is_info_ok(id: int, connection: asyncpg.connection.Connection) -> bool:
-    row = await connection.fetchrow('SELECT is_info_ok FROM users WHERE user_id=$1', id)
-    return row['is_info_ok']
-
-async def get_algorithm_steps(id: int, connection: asyncpg.connection.Connection) -> int:
-    row = await connection.fetchrow('SELECT algorithm_steps FROM users WHERE user_id=$1', id)
-    return int(row['algorithm_steps'])
-
-async def get_likes(id: int, connection: asyncpg.connection.Connection) -> int:
-    row = await connection.fetchrow('SELECT likes FROM users WHERE user_id=$1', id)
-    return row['likes']
-
-async def get_super_likes(id: int, connection: asyncpg.connection.Connection) -> int:
-    row = await connection.fetchrow('SELECT super_likes FROM users WHERE user_id=$1', id)
-    return row['super_likes']
-
-async def get_b64_profile_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
-    row = await connection.fetchrow('SELECT b64_profile FROM users WHERE user_id=$1', id)
-    return row['b64_profile']
-
-async def get_b64_1st_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
-    row = await connection.fetchrow('SELECT b64_1st FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_1st'], encoding='utf-8')
-
-async def get_b64_2nd_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
-    row = await connection.fetchrow('SELECT b64_2nd FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_2nd'], encoding='utf-8')
-
-async def get_b64_1st_photo(id: int, connection: asyncpg.connection.Connection) -> bytes:
-    row = await connection.fetchrow('SELECT b64_3rd FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_3rd'], encoding='utf-8')
-
-async def get_b64_likes_photo_1(id: int, connection: asyncpg.connection.Connection) -> bytes:
+async def get_match_id(id: int) -> int:
     r'''
-    Getting base64 bytes string of first image of person user like from database
+    Returning users match id as int object
     '''
-    row = await connection.fetchrow('SELECT b64_likes_photo_1 FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_likes_photo_1'], encoding='utf-8')
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/match/id', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+    return json_result['id']
 
-async def get_b64_likes_photo_2(id: int, connection: asyncpg.connection.Connection) -> bytes:
+
+async def get_name(id: int) -> str:
     r'''
-    Getting base64 bytes string of second image of person user like from database
+    Returning users name as str object
     '''
-    row = await connection.fetchrow('SELECT b64_likes_photo_2 FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_likes_photo_2'], encoding='utf-8')
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/name', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+    return json_result['name']
 
-async def get_b64_likes_photo_3(id: int, connection: asyncpg.connection.Connection) -> bytes:
+
+async def get_city(id: int) -> str:
     r'''
-    Getting base64 bytes string of third image of person user like from database
+    Returning users city as str object
     '''
-    row = await connection.fetchrow('SELECT b64_likes_photo_3 FROM users WHERE user_id=$1', id)
-    return bytes(row['b64_likes_photo_3'], encoding='utf-8')
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/city', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+    return json_result['city']
 
-async def get_error_status(id: int, connection: asyncpg.connection.Connection) -> bool:
+
+async def get_gender(id: int) -> str:
     r'''
-    Get error status for input check
+    Returning users gender as str object
     '''
-    row = await connection.fetchrow('SELECT error_status FROM users WHERE user_id=$1', id)
-    return row['error_status']
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/gender', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+    return json_result['gender']
 
-#SET DATA (UPDATE table SET field)
-async def create_new_user(user_id: int, connection: asyncpg.connection.Connection, name='', city='',
-                        gender='', birthday=datetime.date.today(), reason='',
-                        profile_photo='', subscribtion=False, matching_pause=False,
-                        reason_to_stop='', was_meeting=False,meeting_reaction='',
-                        why_meeting_bad='', payment_url='',is_waiting_payment=False,
-                        has_match=False, help=False, first_time=True,
-                        comunication_help=False, match_id=0, first_extra_photo='',
-                        second_extra_photo='', third_extra_photo='', is_moderated=False,
-                        is_first_time_moderated=True, is_photo_ok=True, is_info_ok=True,
-                        algorithm_steps=30, likes=7, super_likes=5,
-                        b64_profile='', b64_1st='', b64_2nd='',
-                        b64_3rd='', b64_likes_1 ='', b64_likes_2='',
-                        b64_likes_3='', error_status=False):
-    # REGISTRATING NEW USER
-    await connection.execute('''INSERT INTO users(user_id, name, city,
-        gender, birthday, reason,
-        profile_photo, subscribtion, matching_pause,
-        reason_to_stop, was_meeting, meeting_reaction,
-        why_meeting_bad, payment_url, is_waiting_payment,
-        has_match, help, first_time,
-        comunication_complain, match_id, first_extra_photo,
-        second_extra_photo, third_extra_photo, is_moderated,
-        is_first_time_moderated, is_photo_ok, is_info_ok,
-        algorithm_steps, likes, super_likes,
-        b64_profile, b64_1st, b64_2nd,
-        b64_3rd, b64_likes_photo_1, b64_likes_photo_2,
-        b64_likes_photo_3, error_status) VALUES( $1, $2, $3,
-            $4, $5, $6,
-            $7, $8, $9,
-            $10, $11, $12,
-            $13, $14, $15,
-            $16, $17, $18,
-            $19, $20, $21,
-            $22, $23, $24,
-            $25, $26, $27,
-            $28, $29, $30,
-            $31, $32, $33,
-            $34, $35, $36,
-            $37, $38) ON CONFLICT (user_id) DO NOTHING;''',
-            #   1      2    3
-            user_id, name, city,
-            #  4       5         6
-            gender, birthday, reason,
-            #       7            8              9
-            profile_photo, subscribtion, matching_pause,
-            #      10            11            12
-            reason_to_stop, was_meeting, meeting_reaction,
-            #      13            14            15
-            why_meeting_bad, payment_url, is_waiting_payment,
-            #   16      17       18
-            has_match, help, first_time, 
-            #       19            20            21
-            comunication_help, match_id, first_extra_photo,
-            #       22                  23               24
-            second_extra_photo, third_extra_photo, is_moderated,
-            #       25                    26          27
-            is_first_time_moderated, is_photo_ok, is_info_ok,
-            #       28         29        30
-            algorithm_steps, likes, super_likes,
-            #    31         32       33
-            b64_profile, b64_1st, b64_2nd,
-            #  34          35         36
-            b64_3rd, b64_likes_1, b64_likes_2,
-            #  37           38
-            b64_likes_3, error_status)
+
+async def get_birthday(id: int) -> datetime.date:
+    r'''
+    Returning users birthday as datetime.date object
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/birthday', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+    birthday = datetime.datetime.strptime(json_result['birthday'], '%Y-%m-%d').date()
+    return birthday
+
+async def get_reason(id: int) -> str:
+    r'''
+    Returning reasons to finding match as str object
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/reason', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+    return json_result['reason']
+
+async def get_profile_photo(id: int) -> str:
+    r'''
+    Returning profile photo telegram ID as str obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/profile_id', json={
+         'id' : id 
+         }) as resp: json_result = json.loads(await resp.text())
+
+    return json_result['photo_id']
+
+async def is_subscribed(id: int) -> bool:
+    r'''
+    Returning subscription status as bool object
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/subscription/end', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+    end_date = datetime.datetime.strptime(json_result['date'], '%Y-%m-%d').date()
+    today = datetime.date.today()
+    if end_date >= today:
+        return True
+    else:
+        return False
+
+async def is_paused(id: int) -> bool:
+    r'''
+    Returning if paused finding match as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/match/paused', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
     
-async def set_name(id: int, connection: asyncpg.connection.Connection, name: str):
-    await connection.execute('UPDATE users SET name=$1 WHERE user_id=$2', name, id)
+    return json_result['paused']
 
-async def set_city(id: int, connection: asyncpg.connection.Connection, city: str):
-    await connection.execute('UPDATE users SET city=$1 WHERE user_id=$2', city, id)
+async def get_reason_to_stop(id: int) -> str:
+    r'''
+    Returning reason to stop communication as str obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/communication/reason_to_stop', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_gender(id: int, connection: asyncpg.connection.Connection, gender: str):
-    await connection.execute('UPDATE users SET gender=$1 WHERE user_id=$2', gender, id)
+      return json_result['reason_to_stop']
 
-async def set_birthday(id: int, connection: asyncpg.connection.Connection, birthday: datetime.date):
-    await connection.execute('UPDATE users SET birthday=$1 WHERE user_id=$2', birthday, id)
+async def is_meeting(id: int ) -> bool:
+    r'''
+    Returning status of was there meeting or not as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/meeting/status', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_reason(id: int, connection: asyncpg.connection.Connection, reason: str):
-    await connection.execute('UPDATE users SET reason=$1 WHERE user_id=$2', reason, id)
+      return json_result['was_meeting']
 
-async def set_profile_photo(id: int, connection:asyncpg.connection.Connection, photo: str):
-    await connection.execute('UPDATE users SET profile_photo=$1 WHERE user_id=$2', photo, id)
+async def get_meeting_reaction(id: int) -> str:
+    r'''
+    Returning meeting reaction of user as str obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/meeting/reaction', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_subscribtion_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET subscribtion=$1 WHERE user_id=$2', status, id)
+      return json_result['reaction']
 
-async def set_matching_pause_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET matching_pause=$1 WHERE user_id=$2', status, id)
+async def get_why_meeting_bad(id: int) -> str:
+    r'''
+    Returning why meeting was bad as str obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/meeting/why_bad', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_reason_to_stop(id: int, connection: asyncpg.connection.Connection, reason: str):
-    await connection.execute('UPDATE users SET reason_to_stop=$1 WHERE user_id=$2', reason, id)
+      return json_result['reaction']
 
-async def set_meeting_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET was_meeting=$1 WHERE user_id=$2', status, id)
+async def get_payment_url(id: int) -> str:
+    r'''
+    Returning payment url as str obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/payment/url', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_meeting_reaction(id: int, connection: asyncpg.connection.Connection, reaction: str):
-    await connection.execute('UPDATE users SET meeting_reaction=$1 WHERE user_id=$2', reaction, id)
+      return json_result['url']
 
-async def set_why_meeting_bad(id: int, connection: asyncpg.connection.Connection, why: str):
-    await connection.execute('UPDATE users SET why_meeting_bad=$1 WHERE user_id=$2', why, id)
+async def is_waiting_payment(id: int) -> bool:
+    r'''
+    Returning is user waiting for payment confirming as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/payment/waiting', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_payment_url(id: int, connection: asyncpg.connection.Connection, url: str):
-    await connection.execute('UPDATE users payment_url=$1 WHERE user_id=$2', url, id)
+      return json_result['waiting']
 
-async def set_waiting_payment_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET is_waiting_payment=$1 WHERE user_id=$2', status, id)
+async def is_matching(id: int) -> bool:
+    r'''
+    Returning has user match or not as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/match/status', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_match_status(id: int, connection:asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET has_match=$1 WHERE user_id=$2', status, id)
+      return json_result['has_match']
 
-async def set_help_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET help=$1 WHERE user_id=$2', status, id)
+async def is_help(id: int) -> bool:
+    r'''
+    Returning has user match or not as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/help/status', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_first_time_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET first_time=$1 WHERE user_id=$2', status, id)
+      return json_result['waiting_help']
 
-async def set_comunication_complain_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET comunication_complain=$1 WHERE user_id=$2', status, id)
+async def is_first_time(id: int) -> bool:
+    r'''
+    Returning first time user using service or not as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/first_time', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_match_id_manualy(id: int, connection: asyncpg.connection.Connection, match_id: int):
-    await connection.execute('UPDATE users SET match_id=$1 WHERE user_id=$2', match_id, id)
+      return json_result['first_time']
 
-async def set_1st_extra_photo(id: int, connection: asyncpg.connection.Connection, photo: str):
-    await connection.execute('UPDATE users SET first_extra_photo=$1 WHERE user_id=$2', photo, id)
+async def is_comunication_complain(id: int) -> bool:
+    r'''
+    Returning first time user using service or not as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/communication/complain/status', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_2nd_extra_photo(id: int, connection: asyncpg.connection.Connection, photo: str):
-    await connection.execute('UPDATE users SET second_extra_photo=$1 WHERE user_id=$2', photo, id)
+      return json_result['complain']
 
-async def set_3rd_extra_photo(id: int, connection: asyncpg.connection.Connection, photo: str):
-    await connection.execute('UPDATE users SET third_extra_photo=$1 WHERE user_id=$2', photo, id)
+async def get_1st_extra_photo(id: int) -> str:
+    r'''
+    Returning first side photo telegramID as str obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/side/first_id', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_moderated_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET is_moderated=$1 WHERE user_id=$2', status, id)
+      return json_result['photo_id']
 
-async def set_first_time_moderated(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET is_first_time_moderated=$1 WHERE user_id=$2', status, id)
+async def get_2nd_extra_photo(id: int) -> str:
+    r'''
+    Returning second side photo telegramID as str obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/side/second_id', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_photo_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET is_photo_ok=$1 WHERE user_id=$2', status, id)
+      return json_result['photo_id']
 
-async def set_info_status(id: int, connection: asyncpg.connection.Connection, status: bool):
-    await connection.execute('UPDATE users SET is_info_ok=$1 WHERE user_id=$2', status, id)
+async def get_3rd_extra_photo(id: int) -> str:
+    r'''
+    Returning third side photo telegramID as str obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/side/third_id', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_algorithm_steps(id: int, connection: asyncpg.connection.Connection, step: int):
-    await connection.execute('UPDATE users SET algorithm_steps=$1 WHERE user_id=$2', step, id)
+      return json_result['photo_id']
 
-async def set_likes(id: int, connection: asyncpg.connection.Connection, step: int):
-    await connection.execute('UPDATE users SET likes=$1 WHERE user_id=$2', step, id)
+async def is_moderated(id: int) -> bool:
+    r'''
+    Returning is user pass moderation or not as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/moderation/status', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_superlikes(id: int, connection: asyncpg.connection.Connection, step: int):
-    await connection.execute('UPDATE users SET super_likes=$1 WHERE user_id=$2', step, id)
+      return json_result['moderated']
 
-async def set_b64_profile_photo(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
-    await connection.execute('UPDATE users SET b64_profile=$1 WHERE user_id=$2', str(b64_string), id)
+async def is_first_time_moderated(id: int ) -> bool:
+    r'''
+    Returning is user first time passing moderation or not as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/moderation/first_time', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_b64_1st_photo(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
-    await connection.execute('UPDATE users SET b64_1st=$1 WHERE user_id=$2', str(b64_string), id)
+      return json_result['first_time']
 
-async def set_b64_2nd_photo(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
-    await connection.execute('UPDATE users SET b64_2nd=$1 WHERE user_id=$2', str(b64_string), id)
+async def is_photo_ok(id: int) -> bool:
+    r'''
+    Returning is user photo pass moderation or not as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/moderation/photo_ok', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
 
-async def set_b64_3rd_photo(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
-    await connection.execute('UPDATE users SET b64_3rd=$1 WHERE user_id=$2', str(b64_string), id)
+      return json_result['photo_ok']
 
-async def set_b64_likes_photo_1(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
+async def is_info_ok(id: int) -> bool:
+    r'''
+    Returning is user profile information pass moderation or not as bool obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/moderation/info_ok', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return json_result['info_ok']
+
+async def get_algorithm_steps(id: int) -> int:
+    r'''
+    Returning number of algorithm steps as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/education/steps', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return json_result['step']
+
+async def get_likes(id: int) -> int:
+    r'''
+    Returning number of likes as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/education/likes', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return json_result['likes']
+
+async def get_super_likes(id: int) -> int:
+    r'''
+    Returning number of superlikes as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/education/superlikes', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return json_result['superlikes']
+
+async def get_b64_profile_photo(id: int) -> bytes:
+    r'''
+    Returning profile photo encoded bytes64 string as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/profile_b64', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return bytes(json_result['b64'], encoding='utf-8')
+
+async def get_b64_1st_photo(id: int) -> bytes:
+    r'''
+    Returning first side photo encoded bytes64 string as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/side/first_b64', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return bytes(json_result['b64'], encoding='utf-8')
+
+async def get_b64_2nd_photo(id: int) -> bytes:
+    r'''
+    Returning second side photo encoded bytes64 string as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/side/second_b64', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return bytes(json_result['b64'], encoding='utf-8')
+
+async def get_b64_3rd_photo(id: int) -> bytes:
+    r'''
+    Returning third side photo encoded bytes64 string as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/side/third_b64', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return bytes(json_result['b64'], encoding='utf-8')
+
+async def get_b64_likes_photo_1(id: int) -> bytes:
+    r'''
+    Returning first photo for algorithm encoded bytes64 string as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/ex/first_photo_b64', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return bytes(json_result['b64'], encoding='utf-8')
+
+async def get_b64_likes_photo_2(id: int) -> bytes:
+    r'''
+    Returning second photo for algorithm encoded bytes64 string as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/ex/second_photo_b64', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return bytes(json_result['b64'], encoding='utf-8')
+
+async def get_b64_likes_photo_3(id: int) -> bytes:
+    r'''
+    Returning third photo for algorithm encoded bytes64 string as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/photo/ex/third_photo_b64', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return bytes(json_result['b64'], encoding='utf-8')
+
+async def get_error_status(id: int) -> bool:
+    r'''
+    Returning first photo for algorithm encoded bytes64 string as int obj
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/error', json={
+        'id' : id
+      }) as resp: json_result = json.loads(await resp.text())
+
+      return json_result['error']
+
+
+async def create_new_user(user_id: int):
+    r'''
+    Creating new user in database
+    '''
+    async with aiohttp.ClientSession() as session:
+      async with session.get(url='http://86.110.212.247:3333/new_user', json={
+        'id' : user_id
+      }) as resp: pass
+    
+    
+async def set_name(id: int, name: str):
+    r'''
+    Set name of user
+    id - User ID
+    name - Name to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/name', json={
+            'id' : id,
+            'name' : name
+        }) as resp: pass
+
+
+async def set_city(id: int, city: str):
+    r'''
+    Set city of user
+    id - User ID
+    city - City to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/city', json={
+            'id' : id,
+            'city' : city
+        }) as resp: pass
+
+async def set_gender(id: int, gender: str):
+    r'''
+    Set gebder of user
+    id - User ID
+    gender - Gender to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/gender', json={
+            'id' : id,
+            'gender' : gender
+        }) as resp: pass
+
+async def set_birthday(id: int, birthday: datetime.date):
+    r'''
+    Set birthday of user
+    id - User ID
+    birthday - Gender to set
+    '''
+    birthday = datetime.date.strftime(birthday, '%d.%m.%Y')
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/birthday', json={
+            'id' : id,
+            'birthday' : birthday
+        }) as resp: pass
+
+async def set_reason(id: int, reason: str):
+    r'''
+    Set searching match reason of user
+    id - User ID
+    reason - Reason to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/reason', json={
+            'id' : id,
+            'reason' : reason
+        }) as resp: pass
+
+async def set_profile_photo(id: int, photo: str):
+    r'''
+    Set profile photo telegramID
+    id - User ID
+    photo - ID to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/profile_id', json={
+            'id' : id,
+            'photo_id' : photo
+        }) as resp: pass
+
+
+async def set_subscription_begin_date(id: int, date: datetime.date):
+    r'''
+    Set beginnig of subscription date
+    id - User ID
+    date - date to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/subscription/begin', json={
+            'id' : id,
+            'date' : str(date)
+        }) as resp: pass
+
+
+async def set_subscription_end_date(id: int, date:datetime.date):
+    r'''
+    Set ending of subscription date
+    id - User ID
+    date - date to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/subscription/end', json={
+            'id' : id,
+            'date' : str(date)
+        }) as resp: pass
+
+
+async def set_matching_pause_status(id: int , status: bool):
+    r'''
+    Set matching pause status for user 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/match/paused', json={
+            'id' : id,
+            'pause' : status
+        }) as resp: pass
+
+async def set_reason_to_stop(id: int , reason: str):
+    r'''
+    Set reason of stop communication for user 
+    id - User ID
+    reason - reason to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/communication/reason_to_stop', json={
+            'id' : id,
+            'reason' : reason
+        }) as resp: pass
+
+async def set_meeting_status(id: int , status: bool):
+    r'''
+    Set meeting status (was or not) for user 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/meeting/status', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_meeting_reaction(id: int , reaction: str):
+    r'''
+    Set callback of meeting for user 
+    id - User ID
+    reaction - reaction to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/meeting/reaction', json={
+            'id' : id,
+            'reaction' : reaction
+        }) as resp: pass
+
+async def set_why_meeting_bad(id: int , why: str):
+    r'''
+    Set why meeting was bad for user 
+    id - User ID
+    reaction - reaction to set
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/meeting/why_bad', json={
+            'id' : id,
+            'reason' : why
+        }) as resp: pass
+
+async def set_payment_url(id: int , url: str):
+    r'''
+    Set why meeting was bad for user 
+    id - User ID
+    url - set payment url
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/payment/url', json={
+            'id' : id,
+            'url' : url
+        }) as resp: pass
+
+async def set_waiting_payment_status(id: int , status: bool):
+    r'''
+    Set waiting of payment status for user 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/payment/waiting', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_match_status(id: int, status: bool):
+    r'''
+    Set match status for user 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/match/status', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_help_status(id: int , status: bool):
+    r'''
+    Set waiting for help status for user 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/help/status', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_first_time_status(id: int , status: bool):
+    r'''
+    Set first time using service status for user 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/first_time', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_comunication_complain_status(id: int , status: bool):
+    r'''
+    Set communication complain status for user 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/communication/complain/status', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_match_id_manualy(id: int , match_id: int):
+    r'''
+    Set match ID for user 
+    id - User ID
+    match_id - Match user ID
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/match/id', json={
+            'id' : id,
+            'match_id' : match_id
+        }) as resp: pass
+
+async def set_1st_extra_photo(id: int , photo: str):
+    r'''
+    Set first side photo telegramID for user 
+    id - User ID
+    photo - Photo telegram ID
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/side/first_id', json={
+            'id' : id,
+            'photo_id' : photo
+        }) as resp: pass
+
+async def set_2nd_extra_photo(id: int , photo: str):
+    r'''
+    Set second side photo telegramID for user 
+    id - User ID
+    photo - Photo telegram ID
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/side/second_id', json={
+            'id' : id,
+            'photo_id' : photo
+        }) as resp: pass
+
+async def set_3rd_extra_photo(id: int , photo: str):
+    r'''
+    Set third side photo telegramID for user 
+    id - User ID
+    photo - Photo telegram ID
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/side/third_id', json={
+            'id' : id,
+            'photo_id' : photo
+        }) as resp: pass
+
+async def set_moderated_status(id: int , status: bool):
+    r'''
+    Set pass moderation or not status for user 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/moderation/status', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_first_time_moderated(id: int , status: bool):
+    r'''
+    Set first time moderated or not status for user 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/moderation/first_time', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_photo_status(id: int , status: bool):
+    r'''
+    User photo pass moderation or not 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/moderation/photo_ok', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_info_status(id: int , status: bool):
+    r'''
+    User profile info pass moderation or not 
+    id - User ID
+    status - bool
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/moderation/info_ok', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
+
+async def set_algorithm_steps(id: int , step: int):
+    r'''
+    Set number of steps for algorithm education 
+    id - User ID
+    step - int number
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/education/steps', json={
+            'id' : id,
+            'steps' : step
+        }) as resp: pass
+
+async def set_likes(id: int , likes: int):
+    r'''
+    Set number of likes in algorithm education 
+    id - User ID
+    likes - int number
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/education/likes', json={
+            'id' : id,
+            'likes' : likes
+        }) as resp: pass
+
+async def set_superlikes(id: int , superlikes: int):
+    r'''
+    Set number of superlikes in algorithm education 
+    id - User ID
+    likes - int number
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/education/superlikes', json={
+            'id' : id,
+            'superlikes' : superlikes
+        }) as resp: pass
+
+async def set_b64_profile_photo(id: int , b64_string: bytes):
+    r'''
+    Set profile photo base64 bytes string 
+    id - User ID
+    b64_string - base64 bytes string
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/profile_b64', json={
+            'id' : id,
+            'b64' : str(b64_string)
+        }) as resp: pass
+
+async def set_b64_1st_photo(id: int , b64_string: bytes):
+    r'''
+    Set first side photo base64 string 
+    id - User ID
+    b64_string - base64 bytes string
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/side/first_b64', json={
+            'id' : id,
+            'b64' : str(b64_string)
+        }) as resp: pass
+
+async def set_b64_2nd_photo(id: int , b64_string: bytes):
+    r'''
+    Set second side photo base64 string 
+    id - User ID
+    b64_string - base64 bytes string
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/side/second_b64', json={
+            'id' : id,
+            'b64' : str(b64_string)
+        }) as resp: pass
+
+async def set_b64_3rd_photo(id: int , b64_string: bytes):
+    r'''
+    Set third side photo base64 string 
+    id - User ID
+    b64_string - base64 bytes string
+    '''
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/side/third_b64', json={
+            'id' : id,
+            'b64' : str(b64_string)
+        }) as resp: pass
+
+async def set_b64_likes_photo_1(id: int , b64_string: bytes):
     r'''
     save 1st image of peoples who user likes as b64 string format
     '''
-    await connection.execute('UPDATE users SET b64_likes_photo_1=$1 WHERE user_id=$2', str(b64_string), id)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/ex/first_photo_b64', json={
+            'id' : id,
+            'b64' : str(b64_string)
+        }) as resp: pass
 
-async def set_b64_likes_photo_2(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
+async def set_b64_likes_photo_2(id: int , b64_string: bytes):
     r'''
     save 2nd image of peoples who user likes as b64 string format
     '''
-    await connection.execute('UPDATE users SET b64_likes_photo_2=$1 WHERE user_id=$2', str(b64_string), id)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/ex/second_photo_b64', json={
+            'id' : id,
+            'b64' : str(b64_string)
+        }) as resp: pass
 
-async def set_b64_likes_photo_3(id: int, connection: asyncpg.connection.Connection, b64_string: bytes):
+async def set_b64_likes_photo_3(id: int , b64_string: bytes):
     r'''
     save 3rd image of peoples who user likes as b64 string format
     '''
-    await connection.execute('UPDATE users SET b64_likes_photo_3=$1 WHERE user_id=$2', str(b64_string), id)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/photo/ex/third_photo_b64', json={
+            'id' : id,
+            'b64' : str(b64_string)
+        }) as resp: pass
 
-async def set_error_status(id: int, connection: asyncpg.connection.Connection, status: bool):
+async def set_error_status(id: int , status: bool):
     r'''
     Set error flag
     '''
-    await connection.execute('UPDATE users SET error_status=$1 WHERE user_id=$2', status, id)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/error', json={
+            'id' : id,
+            'status' : status
+        }) as resp: pass
 
-async def table_ini(conn: asyncpg.connection.Connection):
-    conn = await asyncpg.connect('postgresql://admin:sasuke007192@localhost/bot_db')
-    await conn.execute('''
-            CREATE TABLE IF NOT EXISTS users(
-                user_id bigint PRIMARY KEY,
-                name text,
-                city text,
-                gender text,
-                birthday date,
-                reason text,
-                profile_photo text,
-                subscribtion bool,
-                matching_pause bool,
-                reason_to_stop text,
-                was_meeting bool,
-                meeting_reaction text,
-                why_meeting_bad text,
-                payment_url text,
-                is_waiting_payment bool,
-                has_match bool,
-                help bool,
-                first_time bool,
-                comunication_complain bool,
-                match_id bigint,
-                first_extra_photo text,
-                second_extra_photo text,
-                third_extra_photo text,
-                is_moderated bool,
-                is_first_time_moderated bool,
-                is_photo_ok bool,
-                is_info_ok bool,
-                algorithm_steps int,
-                likes int,
-                super_likes int,
-                b64_profile text,
-                b64_1st text,
-                b64_2nd text,
-                b64_3rd text,
-                b64_likes_photo_1 text,
-                b64_likes_photo_2 text,
-                b64_likes_photo_3 text,
-                error_status bool
-            )
-    ''')
-
-#     await conn.execute('''INSERT INTO users(user_id, name, city, \
-#         gender, birthday, reason,\
-#         profile_photo, subscribtion, matching_pause, \
-#         reason_to_stop, was_meeting, meeting_reaction, \
-#         why_meeting_bad, payment_url, is_waiting_payment, \
-#         has_match, help, first_time, \
-#         comunication_complain, match_id) VALUES( $1, $2, $3,\
-#             $4, $5, $6, \
-#             $7, $8, $9, \
-#             $10, $11, $12, \
-#             $13, $14, $15, \
-#             $16, $17, $18, \
-#             $19, $20)''', 
-#         877505237,
-#         'Никита',
-#         'Санкт-Петербург',
-#         'М',
-#         datetime.date(1996, 8, 7),
-#         'Серьезные отношения',
-#         './pic/profiles/877505237/main_profile_photo.jpg',
-#         True,
-#         False,
-#         'null',
-#         False,
-#         'null',
-#         'null',
-#         'null',
-#         False,
-#         True,
-#         False,
-#         True,
-#         False,
-#         5951187826)
-
-#     await conn.execute('''INSERT INTO users(user_id, name, city, \
-#         gender, birthday, reason,\
-#         profile_photo, subscribtion, matching_pause, \
-#         reason_to_stop, was_meeting, meeting_reaction, \
-#         why_meeting_bad, payment_url, is_waiting_payment, \
-#         has_match, help, first_time, \
-#         comunication_complain, match_id) VALUES( $1, $2, $3,\
-#             $4, $5, $6, \
-#             $7, $8, $9, \
-#             $10, $11, $12, \
-#             $13, $14, $15, \
-#             $16, $17, $18, \
-#             $19, $20)''',
-#             5951187826,
-#             'Ефим',
-#             'Санкт-Петербург',
-#             'М',
-#             datetime.date(1992, 6, 14),
-#             'Серьезные отношения',
-#             './pic/Head.png',
-#             True,
-#             False,
-#             'null',
-#             False,
-#             'null',
-#             'null',
-#             'null',
-#             False,
-#             True,
-#             False,
-#             True,
-#             False,
-#             877505237)
-    
-#     print(await is_matching(877505237, conn))
-#     print(await is_matching(5951187826, conn))
-
-#     await conn.close()
-
-# asyncio.get_event_loop().run_until_complete(table_ini())
+async def table_ini():
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url='http://86.110.212.247:3333/ini') as resp: pass
